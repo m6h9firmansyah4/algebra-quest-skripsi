@@ -557,8 +557,8 @@ function initCamera(){
   const map = document.getElementById("worldMap");
 
   const fitScale = getInitialScale();
-  scale = fitScale * EXTRA_ZOOM;
-
+  scale = Math.max(fitScale * EXTRA_ZOOM, 1.2);
+  
   // hitung center
   const viewWidth = window.innerWidth;
   const viewHeight = window.innerHeight;
