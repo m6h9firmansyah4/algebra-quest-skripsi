@@ -473,6 +473,8 @@ function initDrag(){
   map.addEventListener("touchmove", (e)=>{
     if(!isDragging) return;
 
+    e.preventDefault(); 
+
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
 
@@ -491,9 +493,10 @@ function initDrag(){
     currentX = clamp(currentX + dx, minX, 0);
     currentY = clamp(currentY + dy, minY, 0);
 
-
    map.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
-    });
+    }, 
+    { passive: false }
+    );
 
     // touchend untuk berhenti panning
     window.addEventListener("touchend", ()=>{
@@ -558,7 +561,7 @@ function initCamera(){
 
   const fitScale = getInitialScale();
   scale = Math.max(fitScale * EXTRA_ZOOM, 1.2);
-  
+
   // hitung center
   const viewWidth = window.innerWidth;
   const viewHeight = window.innerHeight;

@@ -5,6 +5,7 @@ body {
   font-family: Arial, sans-serif;
   background: linear-gradient(to bottom, #020617, #020617);
   color: white;
+  touch-action: none;
 }
 
 /* container utama */
@@ -152,6 +153,7 @@ body {
   overflow: hidden;
   position: relative;
   touch-action: none;
+  overscroll-behavior: none;
 }
 
 /* island */
