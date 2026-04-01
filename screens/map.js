@@ -1,5 +1,4 @@
 let isDragging = false;
-let dragInitialized = false;
 let startX, startY;
 let currentX = 0;
 let currentY = 0;
@@ -101,11 +100,10 @@ function renderIslandView(worldId){
   </div>
   `;
 
-  setTimeout(() => {
-      dragInitialized = false;
-      initCamera(); 
-      initDrag();
-    }, 100);
+    requestAnimationFrame(() => {
+        initCamera();
+        initDrag();
+      });
 
 return `
   <div class="map-wrapper">
