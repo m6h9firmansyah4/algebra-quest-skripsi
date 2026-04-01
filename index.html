@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Algebra Quest</title>
+
+  <!-- Tailwind CDN (DEV MODE) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <!-- ROOT CONTAINER (SPA) -->
+  <div id="app" class="min-h-screen flex flex-col"></div>
+
+  <!-- ========================= -->
+  <!-- FIREBASE CONFIG -->
+  <!-- ========================= -->
+  <script type="module" src="./firebase-config.js"></script>
+
+  <!-- ========================= -->
+  <!-- GAME CORE -->
+  <!-- ========================= -->
+  <script type="module" src="./game.js"></script>
+  <script type="module" src="./main.js"></script>
+
+  <!-- ========================= -->
+  <!-- SCREENS -->
+  <!-- ========================= -->
+  
+  <script type="module" src="./screens/stage.js"></script>
+  <script type="module" src="./screens/map.js"></script>
+  <script type="module" src="./screens/home.js"></script>
+  <script type="module" src="./screens/history.js"></script>
+  <script type="module" src="./screens/achievement.js"></script>
+  <script type="module" src="./screens/setting.js"></script>
+  <script type="module" src="./screens/developer.js"></script>
+  
+
+  <!-- ========================= -->
+  <!-- QUEST CONTROLLER -->
+  <!-- ========================= -->
+
+</body>
+</html>
