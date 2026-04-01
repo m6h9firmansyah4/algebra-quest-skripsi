@@ -1,4 +1,5 @@
 let isDragging = false;
+let dragInitialized = false;
 let startX, startY;
 let currentX = 0;
 let currentY = 0;
@@ -99,10 +100,16 @@ function renderIslandView(worldId){
   </p>
   </div>
   `;
-  return `
+
+  setTimeout(() => {
+      initCamera(); 
+      initDrag();
+    }, 100);
+
+return `
   <div class="map-wrapper">
     ${headerZone}
-      <div class="map-full">
+      <div id="worldMap" class="map-full">
       <img src="${islandImg}" class="map-bg">
 
       <div id="stageNodes">
@@ -450,6 +457,9 @@ function clamp(value, min, max){
 // DRAG TO PAN MAP
 // ===============================
 function initDrag(){
+  if (dragInitialized) return; // 🔥 TAMBAHKAN INI
+  dragInitialized = true;      // 🔥 TAMBAHKAN INI
+
   const map = document.getElementById("worldMap");
 
   map.addEventListener("touchstart", (e)=>{
@@ -530,15 +540,13 @@ function initDrag(){
 }
 
 function getInitialScale(){
-
   const viewWidth = window.innerWidth;
   const viewHeight = window.innerHeight;
 
   const scaleX = viewWidth / MAP_WIDTH;
   const scaleY = viewHeight / MAP_HEIGHT;
 
-  // pilih yang paling kecil supaya seluruh map masuk
-  const fitScale = Math.min(scaleX, scaleY);
+  return Math.min(scaleX, scaleY); // 🔥 INI WAJIB
 }
 
 // ===============================
