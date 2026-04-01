@@ -102,6 +102,7 @@ function renderIslandView(worldId){
   `;
 
   setTimeout(() => {
+      dragInitialized = false;
       initCamera(); 
       initDrag();
     }, 100);
@@ -457,29 +458,37 @@ function clamp(value, min, max){
 // DRAG TO PAN MAP
 // ===============================
 function initDrag(){
-  if (dragInitialized) return; // 🔥 TAMBAHKAN INI
-  dragInitialized = true;      // 🔥 TAMBAHKAN INI
 
   const map = document.getElementById("worldMap");
+  if (!map) return;
 
+  let isDraggingLocal = false;
+  let startXLocal = 0;
+  let startYLocal = 0;
+
+  // ====================
+  // TOUCH START
+  // ====================
   map.addEventListener("touchstart", (e)=>{
-    isDragging = true;
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
+    isDraggingLocal = true;
+    startXLocal = e.touches[0].clientX;
+    startYLocal = e.touches[0].clientY;
     map.style.transition = "none";
   });
 
-  // touchmove untuk panning
+  // ====================
+  // TOUCH MOVE
+  // ====================
   map.addEventListener("touchmove", (e)=>{
-    if(!isDragging) return;
+    if(!isDraggingLocal) return;
 
-    e.preventDefault(); 
+    e.preventDefault();
 
-    const dx = e.touches[0].clientX - startX;
-    const dy = e.touches[0].clientY - startY;
+    const dx = e.touches[0].clientX - startXLocal;
+    const dy = e.touches[0].clientY - startYLocal;
 
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
+    startXLocal = e.touches[0].clientX;
+    startYLocal = e.touches[0].clientY;
 
     const viewWidth = window.innerWidth;
     const viewHeight = window.innerHeight;
@@ -493,36 +502,38 @@ function initDrag(){
     currentX = clamp(currentX + dx, minX, 0);
     currentY = clamp(currentY + dy, minY, 0);
 
-   map.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
-    }, 
-    { passive: false }
-    );
+    map.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
+  }, { passive: false });
 
-    // touchend untuk berhenti panning
-    window.addEventListener("touchend", ()=>{
-        isDragging = false;
-    });
+  window.addEventListener("touchend", ()=>{
+    isDraggingLocal = false;
+  });
 
-
+  // ====================
+  // MOUSE START
+  // ====================
   map.addEventListener("mousedown", (e)=>{
-    isDragging = true;
-    startX = e.clientX;
-    startY = e.clientY;
+    isDraggingLocal = true;
+    startXLocal = e.clientX;
+    startYLocal = e.clientY;
     map.style.transition = "none";
   });
 
   window.addEventListener("mouseup", ()=>{
-    isDragging = false;
+    isDraggingLocal = false;
   });
 
+  // ====================
+  // MOUSE MOVE
+  // ====================
   window.addEventListener("mousemove", (e)=>{
-    if(!isDragging) return;
+    if(!isDraggingLocal) return;
 
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
+    const dx = e.clientX - startXLocal;
+    const dy = e.clientY - startYLocal;
 
-    startX = e.clientX;
-    startY = e.clientY;
+    startXLocal = e.clientX;
+    startYLocal = e.clientY;
 
     const viewWidth = window.innerWidth;
     const viewHeight = window.innerHeight;
@@ -530,18 +541,15 @@ function initDrag(){
     const scaledWidth = MAP_WIDTH * scale;
     const scaledHeight = MAP_HEIGHT * scale;
 
-    // batas minimal (kanan & bawah)
     const minX = viewWidth - scaledWidth;
     const minY = viewHeight - scaledHeight;
 
-    // clamp supaya tidak keluar layar
     currentX = clamp(currentX + dx, minX, 0);
     currentY = clamp(currentY + dy, minY, 0);
 
     map.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
   });
 }
-
 function getInitialScale(){
   const viewWidth = window.innerWidth;
   const viewHeight = window.innerHeight;
