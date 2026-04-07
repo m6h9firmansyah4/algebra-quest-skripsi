@@ -3,6 +3,7 @@ import { auth, provider, db } from "./firebase-config.js";
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { gameState, defaultPlayerStats } from "./engine/gameState.js"; 
+import "./screens/profile.js";
 
 
 window.gameState = gameState;
@@ -35,10 +36,10 @@ window.sfx = {
             osc.stop(this.ctx.currentTime + duration);
         } catch(e) { console.log("Audio error:", e); }
     },
-    correct: function() { 
-        this.playTone(600, 'sine', 0.1); 
-        setTimeout(() => this.playTone(1200, 'sine', 0.2), 100); 
-    },
+    correct: function() {
+        if(!window.gameState.settings.sound) return;
+        this.playTone(600, 'sine', 0.1);
+        },
     wrong: function() { 
         this.playTone(150, 'sawtooth', 0.3); 
         setTimeout(() => this.playTone(100, 'sawtooth', 0.3), 150); 
@@ -74,17 +75,6 @@ window.Icons = {
     Zap: () => '⚡', Lock: () => '🔒'
 };
 
-// ==========================================
-// 3. DATA DEFAULT (WAJIB SEBELUM GAMESTATE) ⚠️
-// ==========================================
-
-// ==========================================
-// 4. GAME STATE UTAMA
-// ==========================================
-
-// ==========================================
-// 5. FUNGSI HELPER & LOGIC
-// ==========================================
 
 // Fungsi Helper: Load Data Aman
 function safeLoadUserData(dbStats) {
@@ -99,6 +89,44 @@ function safeLoadUserData(dbStats) {
         defense: dbStats.defense || 5
     };
 }
+
+window.resetProgress = async function(){
+  if(!confirm("Yakin ingin menghapus semua progress?")) return;
+
+  const gs = window.gameState;
+
+  // reset local
+  gs.player = {
+    ...defaultPlayerStats
+  };
+
+    gs.progress = {
+    numbers: { done: 0 },
+    algebra: { done: 0 },
+    geometry: { done: 0 }
+    };
+    gs.battleLog = [];
+
+  // 🔥 reset ke Firebase juga
+  if (auth.currentUser) {
+    try {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+
+      await setDoc(userRef, {
+        username: gs.currentUser,
+        stats: gs.player,
+        lastSaved: new Date()
+      }, { merge: true });
+
+      gs.feedback = "✅ Progress berhasil direset & disimpan!";
+    } catch (e) {
+      console.error(e);
+      gs.feedback = "❌ Reset gagal disimpan ke server!";
+    }
+  }
+
+  window.render();
+};
 
 // LOGIN
 window.handleLogin = async function() {
@@ -175,6 +203,51 @@ window.goTo = function(screen) {
   window.render();
 };
 
+window.setTheme = function(theme){
+  const gs = window.gameState;
+  gs.settings.theme = theme;
+
+  document.body.className = theme + "-theme";
+
+  window.render();
+};
+
+window.bgm = {
+  audio: null,
+
+  play(track){
+    if(this.audio) this.audio.pause();
+
+    this.audio = new Audio(`assets/music/${track}.mp3`);
+    this.audio.loop = true;
+
+    if(window.gameState.settings.music){
+      this.audio.play();
+    }
+  },
+
+  stop(){
+    if(this.audio) this.audio.pause();
+  }
+};
+
+window.toggleMusic = function(){
+  const gs = window.gameState;
+  gs.settings.music = !gs.settings.music;
+
+  if(gs.settings.music){
+    window.bgm.play(gs.settings.musicTrack);
+  } else {
+    window.bgm.stop();
+  }
+
+  window.render();
+};
+
+window.toggleSound = function(){
+  window.gameState.settings.sound = !window.gameState.settings.sound;
+  window.render();
+};
 // ==========================================
 // 6. RENDER FUNCTIONS (TAMPILAN)
 // ==========================================
@@ -245,6 +318,9 @@ window.render = function() {
                 break;
             case 'setting':
                 html = window.renderSettingScreen();
+                break;
+            case 'profile':
+                html = window.renderProfileScreen();
                 break;
             case 'developer':
                 html = window.renderDeveloperScreen();

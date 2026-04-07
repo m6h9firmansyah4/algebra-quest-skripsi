@@ -2,7 +2,7 @@
 import { getQuestion } from "./engine/worldRouter.js";
 import { getEnemy } from "./engine/enemyRouter.js";
 import { validateAnswer, calculatePlayerDamage, calculateEnemyDamage, applyStreakBonus } from "./engine/battleSystem.js";
-import { spawnDamage } from "./engine/";
+import { spawnDamage } from "./engine/damageEngine.js";
 
 
 // ==========================================
@@ -113,10 +113,13 @@ window.renderBattleScreen = function() {
 
       <!-- PLAYER -->
       <div class="fighter" id="player">
-        <div class="avatar">
-          <img src="assets/hero.png">
-          <div class="hp-ring" style="--hp:${(p.hp/p.maxHp)*100}"></div>
-        </div>
+            <div class="avatar">
+            <div class="hp-ring" style="--hp:${(p.hp/p.maxHp)*100}"></div>
+            <div class="avatar-inner">
+                <img src="assets/enemy/slime.png">
+                <div class="hp-text">${p.hp}/${p.maxHp}</div>
+            </div>
+            </div>
         <div class="fighter-name mt-2">
           ${p.name} <span class="text-yellow-400">(Lv.${p.level})</span>
         </div>
@@ -127,8 +130,11 @@ window.renderBattleScreen = function() {
       <!-- ENEMY -->
       <div class="fighter" id="enemy">
         <div class="avatar">
-          <img src="${e.img}">
-          <div class="hp-ring enemy" style="--hp:${(e.hp/e.maxHp)*100}"></div>
+            <div class="hp-ring enemy" style="--hp:${(e.hp/e.maxHp)*100}"></div>
+            <div class="avatar-inner">
+            <img src="${e.img}">
+            <div class="hp-text">${e.hp}/${e.maxHp}</div>
+        </div>
         </div>
         <div class="fighter-name mt-2">${e.name}</div>
       </div>
@@ -182,6 +188,28 @@ window.renderBattleScreen = function() {
   `;
 };
 
+window.startBattle = function(world, area, stage){
+  const gs = window.gameState;
+
+  gs.selectedWorld = world;
+  gs.selectedArea = area;
+  gs.selectedStage = stage;
+
+  gs.enemy = getEnemy(world, stage);
+
+  const rawQ = getQuestion(world, stage);
+  gs.currentQuestion = adaptQuestion(rawQ);
+
+  gs.userAnswer = '';
+  gs.feedback = '';
+  gs.mode = "attack";
+  gs.streak = 0;
+
+  gs.screen = 'battle';
+
+  window.render();
+};
+
 window.setMode = function(mode){
   window.gameState.mode = mode;
 };
@@ -229,54 +257,82 @@ window.nextTurn = function() {
 
 // --- CEK JAWABAN ---
 window.checkAnswer = function() {
-    const gs = window.gameState;
-    const q = gs.currentQuestion;
+  const gs = window.gameState;
+  const q = gs.currentQuestion;
 
-    // Validasi input kosong
-    if (q.type === 'input' && (gs.userAnswer === '' || gs.userAnswer === null)) {
-        alert("Isi jawaban dulu!");
-        return;
-    }
-    const isCorrect = validateAnswer(gs);
+  if (q.type === 'input' && (gs.userAnswer === '' || gs.userAnswer === null)) {
+    alert("Isi jawaban dulu!");
+    return;
+  }
 
-    if (isCorrect) {
+  const isCorrect = validateAnswer(gs);
+
+  // =========================
+  // JAWABAN BENAR
+  // =========================
+  if (isCorrect) {
+
     window.sfx.correct();
 
     let damage = calculatePlayerDamage(gs);
     damage = applyStreakBonus(gs, damage);
+    damage += getTitleBonus(gs);
+
+    let type = "circle";
+
+    if(gs.mode === "skill"){
+      damage *= 1.8;
+      type = "square";
+      gs.battleLog.push("⚡ SKILL HIT!");
+    }
+
+    if(gs.streak >= 3){
+      type = "triangle";
+    }
+
     gs.enemy.hp -= damage;
+
+    spawnDamage(type, damage, "player"); // ✔ dari player ke enemy
 
     gs.battleLog.push(`⚔️ Benar! Musuh kena ${damage} DMG.`);
     gs.feedback = `<span class="text-green-400 font-bold">BENAR!</span> ${q.explanation}`;
-    
+
     if (gs.enemy.hp <= 0) {
-        winBattle();
-        return;
+      winBattle();
+      return;
     }
 
-} else {
+  } 
+  // =========================
+  // JAWABAN SALAH
+  // =========================
+  else {
+
     window.sfx.wrong();
 
     gs.streak = 0;
-    const damage = calculateEnemyDamage(gs);
+
+    let damage = calculateEnemyDamage(gs);
     gs.player.hp -= damage;
+
+    spawnDamage("circle", damage, "enemy"); // ✔ dari enemy ke player
 
     gs.battleLog.push(`🛡️ Salah! Kamu kena ${damage} DMG.`);
     gs.feedback = `<span class="text-red-400 font-bold">SALAH!</span> ${q.explanation}`;
-    
-    if (gs.player.hp <= 0) {
-        alert("GAME OVER! Kamu pingsan.");
-        gs.player.hp = gs.player.maxHp;
-        gs.screen = 'stage'; 
-        window.saveProgress(gs);
-        window.render();
-        return;
-    }
-}
 
-    // PENTING: Jangan generate soal baru disini. Biarkan user baca feedback dulu.
-    // Soal baru akan digenerate saat user klik "Lanjut Soal" (nextTurn).
-    window.render();
+    if (gs.player.hp <= 0) {
+      alert("GAME OVER! Kamu pingsan.");
+      gs.player.hp = gs.player.maxHp;
+      gs.screen = 'map';
+      window.render();
+      return;
+    }
+  }
+
+  // 🔥 RESET MODE
+  gs.mode = "attack";
+
+  window.render();
 };
 
 window.handleBack = async function(){
@@ -356,93 +412,4 @@ window.buyItem = function(itemId) {
     } else {
         alert("Gold tidak cukup!");
     }
-};
-
-window.renderBattleScreen = function() {
-    const gs = window.gameState;
-    const e = gs.enemy;
-    const p = gs.player;
-    const q = gs.currentQuestion;
-
-    if (!q || !e) { window.goTo('map'); return "Loading..."; }
-
-    // Logic Tombol Pilihan Ganda
-    let inputHtml = '';
-    if (q.type === 'input') {
-        inputHtml = `
-            <div class="flex gap-2">
-                <input type="number" class="game-input mb-0 text-center text-lg font-bold" 
-                       value="${gs.userAnswer}" 
-                       oninput="window.gameState.userAnswer = this.value"
-                       placeholder="?" autofocus>
-                <button onclick="window.checkAnswer()" class="btn btn-blue px-6">SERANG!</button>
-            </div>
-        `;
-    } else if (q.options) {
-        inputHtml = `<div class="grid grid-cols-1 gap-2 mt-4">
-            ${q.options.map((opt, idx) => `
-                <button onclick="window.gameState.userAnswer='${idx}'; window.checkAnswer()" class="btn btn-blue text-left py-3 border border-blue-400">
-                    <span class="font-bold mr-2">${String.fromCharCode(65+idx)}.</span> ${opt}
-                </button>
-            `).join('')}
-        </div>`;
-    }
-    if (e.hp <= 0) {
-        inputHtml = '';
-        }
-
-    return `
-        <div class="p-4 max-w-2xl mx-auto fade-in">
-            <div class="glass-panel flex justify-between items-center mb-4">
-                ${e.hp > 0 ? `
-  <button onclick="window.goTo('map')" 
-    class="text-xs text-gray-400 border border-gray-600 px-2 py-1 rounded">
-    🏳️ Kabur
-  </button>
-` : ''}
-                <div class="font-bold text-red-400">VS ${e.name}</div>
-            </div>
-
-            <div class="glass-panel mb-4">
-                <div class="flex justify-between mb-1 text-sm font-bold">
-                    <span>${p.name} <span class="text-yellow-400">(Lv.${p.level})</span></span>
-                    <span class="text-green-400">❤️ ${p.hp}/${p.maxHp}</span>
-                </div>
-                <div class="bar-container mb-4"><div class="bar-fill hp bg-green-500" style="width: ${(p.hp/p.maxHp)*100}%"></div></div>
-                
-                <div class="flex items-end justify-between mb-1">
-                    <div class="text-sm font-bold text-red-300">${e.name}</div>
-                    <img src="${e.img}" class="w-16 h-16 bg-slate-700 rounded-full border-2 border-red-500 mb-[-10px] z-10">
-                </div>
-                <div class="flex justify-between text-xs mb-1">
-                    <span>HP Musuh</span>
-                    <span class="text-red-400">${e.hp}/${e.maxHp}</span>
-                </div>
-                <div class="bar-container"><div class="bar-fill hp" style="width: ${(e.hp/e.maxHp)*100}%"></div></div>
-            </div>
-
-            <div class="glass-panel text-center relative">
-                <div class="text-xs text-blue-300 mb-2 uppercase tracking-widest">Misi Matematika</div>
-                <h2 class="text-xl font-mono font-bold mb-6 bg-slate-800 p-4 rounded-xl border border-slate-600">${q.question}</h2>
-                    ${gs.feedback ? `
-                    <div class="mb-4 p-3 bg-slate-800 rounded-lg border border-gray-500 text-sm animate-pulse">
-                        ${gs.feedback}
-                    </div>
-
-                    ${e.hp > 0 ? `
-                        <button onclick="window.nextTurn()" 
-                        class="btn btn-green w-full py-2 mb-2">
-                        Lanjut Soal Berikutnya ➡️
-                        </button>
-                    ` : ''}
-                    ` : inputHtml}
-            </div>
-            
-            <div class="mt-4 p-2 rounded bg-black/30 text-xs text-gray-400 font-mono h-24 overflow-y-auto border border-white/5">
-                        ${(gs.battleLog || []).slice().reverse().map(log => `
-                            <div class="py-0.5 border-b border-white/5">> ${log}</div>
-                        `).join('')}
-            </div>
-        </div>
-    `;
 };

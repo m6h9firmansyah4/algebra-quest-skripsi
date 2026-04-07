@@ -214,7 +214,7 @@ function getNodesByWorld(worldId){
     { level: 17, x: 1460,y: 580, boss: true } // boss final
   ];
 
-  return renderPaths(nodes) + renderNodes(nodes);
+  return renderPaths(nodes) + renderNodes(nodes, worldId);
   }
   if (worldId === "data") {
 

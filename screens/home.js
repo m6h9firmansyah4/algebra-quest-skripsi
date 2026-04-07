@@ -6,17 +6,21 @@ window.renderHomeScreen = function () {
 
     <!-- PLAYER CARD -->
     <div class="glass-panel mb-4">
-
       <div class="flex justify-between items-center">
+        <div onclick="goTo('profile')" class="glass-panel cursor-pointer">
         <div>
           <h2 class="text-xl font-bold text-yellow-400">
             ${gs.player.name}
           </h2>
+              <span>❤️ HP</span>
+              <span>${gs.player.hp} / ${gs.player.maxHp}</span>
           <p class="text-sm text-gray-400">
             Lv.${gs.player.level}
           </p>
         </div>
-
+          <div class="hp-bar mt-2">
+            <div class="hp-fill" style="width:${(gs.player.hp/gs.player.maxHp)*100}%"></div>
+        </div>
         <div class="text-right text-sm">
           💰 ${gs.player.gold} Gold <br>
           ⭐ ${gs.player.exp}/${gs.player.expToNext}

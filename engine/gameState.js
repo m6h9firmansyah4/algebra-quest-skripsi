@@ -14,6 +14,13 @@ export const gameState = {
   screen: 'welcome',
   currentUser: null,
 
+  settings: {
+  sound: true,
+  music: true,
+  theme: "default",
+  musicTrack: "default"
+},
+
   selectedWorld: null,
   selectedArea: null,
   selectedStage: null,
@@ -28,7 +35,17 @@ export const gameState = {
   },
 
   player: { ...defaultPlayerStats },
+  skills: [
+  { name: "Basic Attack", power: 1 }
+  ],
 
+  achievements: [
+    { name: "Pemula", bonus: 0 },
+    { name: "Pejuang", bonus: 2 },
+    { name: "Master", bonus: 5 }
+  ],
+
+  title: "Pemula",
   enemy: null,
   currentQuestion: null,
   userAnswer: '',
