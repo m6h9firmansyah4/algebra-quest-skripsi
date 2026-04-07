@@ -1,5 +1,3 @@
-let isDragging = false;
-let startX, startY;
 let currentX = 0;
 let currentY = 0;
 let scale = 1; // penting untuk zoom
@@ -28,7 +26,6 @@ window.renderMapScreen = function () {
     <!-- TOP BAR -->
     <div class="map-topbar">
       <button class="btn btn-gray small-btn" onclick="goTo('home')">⬅️</button>
-      <button class="btn btn-purple small-btn" onclick="toggleMateri()">📘</button>
     </div>
 
     <!-- SCROLL WORLD LIST -->
@@ -40,8 +37,6 @@ window.renderMapScreen = function () {
       ${renderWorldCard("data", "📊 Dunia Data & Peluang", "assets/map/island_data.png")}
 
     </div>
-
-    ${renderMateriOverlay()}
 
   </div>
   `;
@@ -118,11 +113,7 @@ return `
 
     <div class="bottom-bar">
       <button class="btn btn-gray small-btn" onclick="closeIsland()">⬅️</button>
-      <button class="btn btn-purple materi-btn" onclick="toggleMateri()">📘 Materi</button>
     </div>
-
-    ${renderMateriOverlay()}
-
   </div>
   `;
 }
@@ -138,24 +129,6 @@ window.closeIsland = function(){
   window.render();
 };
 
-function renderMateriOverlay(){
-  return `
-    <div id="materiOverlay" class="materi-overlay hidden">
-      <div class="materi-content">
-        
-        <div class="materi-header">
-          <span>📘 Materi</span>
-          <button onclick="toggleMateri()">✖</button>
-        </div>
-
-        <div class="materi-body">
-          ${window.renderMateriList ? window.renderMateriList() : "<p>Materi belum tersedia</p>"}
-        </div>
-
-      </div>
-    </div>
-  `;
-}
 
 function getNodesByWorld(worldId){
 
@@ -186,6 +159,7 @@ function getNodesByWorld(worldId){
     ];
     return renderPaths(nodes) + renderNodes(nodes, worldId);
   }
+
   if(worldId === "algebra"){
 
   const nodes = [
@@ -212,7 +186,7 @@ function getNodesByWorld(worldId){
     { level: 17, x: 1450,y: 520, boss: true }
   ];
 
-  return renderPaths(nodes) + renderNodes(nodes);
+    return renderPaths(nodes) + renderNodes(nodes, worldId);
   }
   if (worldId === "geometry") {
 
@@ -281,7 +255,7 @@ function renderNode(level, top, left, isBoss = false, worldId){
     <div 
       class="node ${typeClass} ${unlocked ? '' : 'locked-node'}"
       style="top:${top}px; left:${left}px;"
-      onclick="startBattle('${worldId}','bilangan_bulat', ${level})"
+      onclick="startBattle('${worldId}','default', ${level})"
     >
       ${isBoss ? "👑" : level}
     </div>
@@ -411,28 +385,6 @@ window.zoomToIsland = function(x, y, worldId){
   nodes.classList.remove("hidden");
 
   window.gameState.selectedWorld = worldId;
-};
-
-// ===============================
-// START STAGE → QUEST SYSTEM
-// ===============================
-window.startStage = function(stageId){
-  window.sfx.click();
-
-  // kirim ke quest system kamu (sudah ada di stage.js)
-  window.startQuest(stageId);
-
-  // pindah ke battle screen
-  window.goTo('game');
-};
-
-
-// ===============================
-// TOGGLE MATERI OVERLAY
-// ===============================
-window.toggleMateri = function(){
-  const el = document.getElementById("materiOverlay");
-  el.classList.toggle("hidden");
 };
 
 window.returnToMapWithWorld = function() {

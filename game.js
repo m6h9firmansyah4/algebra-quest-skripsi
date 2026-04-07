@@ -2,6 +2,8 @@
 import { getQuestion } from "./engine/worldRouter.js";
 import { getEnemy } from "./engine/enemyRouter.js";
 import { validateAnswer, calculatePlayerDamage, calculateEnemyDamage, applyStreakBonus } from "./engine/battleSystem.js";
+import { spawnDamage } from "./engine/";
+
 
 // ==========================================
 // WORLD MAP SYSTEM (BARU)
@@ -51,34 +53,137 @@ const shopItems = {
 };
 
 // --- MULAI BATTLE (Hanya dipanggil SEKALI di awal stage) ---
-window.startBattle = function(worldName, floorName, stageNum){
-
+window.renderBattleScreen = function() {
   const gs = window.gameState;
+  const e = gs.enemy;
+  const p = gs.player;
+  const q = gs.currentQuestion;
 
-  gs.selectedWorld = worldName;
-  gs.selectedArea = floorName;
-  gs.selectedStage = stageNum;
-  gs.enemy = getEnemy(worldName, stageNum);
-
-  let rawQ = getQuestion(worldName, stageNum);
+  if (!q || !e) { window.goTo('map'); return "Loading..."; }
 
   // =========================
-  // HANDLE BOSS PHASE
+  // INPUT SYSTEM
   // =========================
-  if(rawQ && rawQ.phases){
-    gs.bossPhases = rawQ.phases;
-    gs.currentPhase = 0;
+  let inputHtml = "";
 
-    let first = gs.bossPhases[0];
-    gs.currentQuestion = adaptQuestion(first);
-  }
-  else{
-    gs.bossPhases = null;
-    gs.currentQuestion = adaptQuestion(rawQ);
+  if (q.type === "input") {
+    inputHtml = `
+      <div class="flex gap-2">
+        <input type="number" 
+          class="game-input text-center text-lg font-bold"
+          value="${gs.userAnswer}" 
+          oninput="window.gameState.userAnswer = this.value"
+          placeholder="?" autofocus>
+        <button onclick="window.checkAnswer()" class="btn btn-blue px-6">
+          ⚔️ Serang
+        </button>
+      </div>
+    `;
+  } else if (q.options) {
+    inputHtml = `
+      <div class="grid grid-cols-1 gap-2 mt-4">
+        ${q.options.map((opt, idx) => `
+          <button onclick="window.gameState.userAnswer='${idx}'; window.checkAnswer()" 
+          class="btn btn-blue">
+            ${opt}
+          </button>
+        `).join("")}
+      </div>
+    `;
   }
 
-  goTo("battle");
-  window.render();
+  if (e.hp <= 0) inputHtml = "";
+
+  return `
+  <div class="p-4 max-w-2xl mx-auto fade-in">
+
+    <!-- TOP BAR -->
+    <div class="flex justify-between items-center mb-4">
+      ${e.hp > 0 ? `
+        <button onclick="window.goTo('map')" 
+        class="text-xs text-gray-400 border border-gray-600 px-2 py-1 rounded">
+        🏳️ Kabur
+        </button>
+      ` : `<div></div>`}
+      <div class="font-bold text-red-400">⚔️ VS ${e.name}</div>
+    </div>
+
+    <!-- ARENA -->
+    <div class="battle-arena">
+
+      <!-- PLAYER -->
+      <div class="fighter" id="player">
+        <div class="avatar">
+          <img src="assets/hero.png">
+          <div class="hp-ring" style="--hp:${(p.hp/p.maxHp)*100}"></div>
+        </div>
+        <div class="fighter-name mt-2">
+          ${p.name} <span class="text-yellow-400">(Lv.${p.level})</span>
+        </div>
+      </div>
+
+      <div class="vs-text">VS</div>
+
+      <!-- ENEMY -->
+      <div class="fighter" id="enemy">
+        <div class="avatar">
+          <img src="${e.img}">
+          <div class="hp-ring enemy" style="--hp:${(e.hp/e.maxHp)*100}"></div>
+        </div>
+        <div class="fighter-name mt-2">${e.name}</div>
+      </div>
+
+    </div>
+
+    <!-- SOAL -->
+    <div class="glass-panel text-center mt-4">
+      <div class="text-xs text-blue-300 mb-2 uppercase tracking-widest">
+        Misi Matematika
+      </div>
+
+      <div class="text-xl font-mono font-bold mb-4 bg-slate-800 p-4 rounded-xl border border-slate-600">
+        ${q.question}
+      </div>
+
+      ${gs.feedback ? `
+        <div class="mb-4 p-3 bg-slate-800 rounded-lg border border-gray-500 text-sm">
+          ${gs.feedback}
+        </div>
+
+        ${e.hp > 0 ? `
+          <button onclick="window.nextTurn()" 
+          class="btn btn-green w-full py-2">
+          Lanjut Soal ➡️
+          </button>
+        ` : ""}
+      ` : inputHtml}
+    </div>
+
+    <!-- ACTION BAR -->
+    ${e.hp > 0 ? `
+    <div class="action-bar mt-3">
+      <button onclick="setMode('attack')" class="btn btn-blue">⚔️ Attack</button>
+      <button onclick="setMode('defend')" class="btn btn-gray">🛡️ Defend</button>
+      <button onclick="setMode('skill')" class="btn btn-purple">⚡ Skill</button>
+    </div>
+    ` : ""}
+
+    <!-- EFFECT LAYER -->
+    <div id="battleEffects"></div>
+
+    <!-- LOG -->
+    <div class="mt-4 p-2 rounded bg-black/30 text-xs text-gray-400 font-mono h-24 overflow-y-auto border border-white/5">
+      ${(gs.battleLog || []).slice().reverse().map(log => `
+        <div class="py-0.5 border-b border-white/5">> ${log}</div>
+      `).join('')}
+    </div>
+
+  </div>
+  `;
+};
+
+window.setMode = function(mode){
+  window.gameState.mode = mode;
 };
 
 function adaptQuestion(q) {
