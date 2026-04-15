@@ -4,64 +4,90 @@ import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstati
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { gameState, defaultPlayerStats } from "./engine/gameState.js"; 
 import "./screens/profile.js";
+import "./screens/shop.js";
+
 
 
 window.gameState = gameState;
-// ==========================================
-// 1. AUDIO ENGINE (DITARUH PALING ATAS) 🎵
-// ==========================================
 window.sfx = {
-    ctx: null,
-    init: function() {
-        if (!this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-    },
-    playTone: function(freq, type, duration, vol = 0.1) {
-        if (!this.ctx) this.init();
-        try {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            
-            osc.type = type; 
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-            
-            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-            
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            
-            osc.start();
-            osc.stop(this.ctx.currentTime + duration);
-        } catch(e) { console.log("Audio error:", e); }
-    },
-    correct: function() {
-        if(!window.gameState.settings.sound) return;
-        this.playTone(600, 'sine', 0.1);
-        },
-    wrong: function() { 
-        this.playTone(150, 'sawtooth', 0.3); 
-        setTimeout(() => this.playTone(100, 'sawtooth', 0.3), 150); 
-    },
-    click: function() { 
-        this.playTone(400, 'triangle', 0.05, 0.05); 
-    },
-    win: function() {
-        [440, 554, 659, 880].forEach((freq, i) => {
-            setTimeout(() => this.playTone(freq, 'square', 0.2, 0.1), i * 150);
-        });
-    }
-};
+  sounds: {},
+  currentMusic: null,
 
-// Aktifkan Audio Context saat klik pertama
-document.addEventListener('click', () => {
-    if (!window.sfx.ctx) {
-    window.sfx.init();
+  init: function() {
+    this.sounds = {
+      click: new Audio("assets/sfx/click1.mp3"),
+      click2: new Audio("assets/sfx/click2.mp3"),
+      win: new Audio("assets/sfx/win.mp3"),
+      lose: new Audio("assets/sfx/lose.mp3"),
+      battle: new Audio("assets/sfx/battlesfx.mp3"),
+      theme: new Audio("assets/sfx/themesfx.mp3"),
+    };
+
+    this.sounds.theme.loop = true;
+    this.sounds.battle.loop = true;
+  },
+
+  playMusic: function(name) {
+    if (!window.gameState.settings.music) return;
+
+    // 🔥 CEK: kalau sudah diputar, jangan ulang
+    if (this.currentMusic === name) return;
+
+    this.currentMusic = name;
+
+    Object.values(this.sounds).forEach(s => {
+        if (s.loop) s.pause();
+    });
+
+    const music = this.sounds[name];
+    if (music) {
+        music.currentTime = 0;
+        music.play().catch(() => {}); // Cegah error autoplay
     }
-    if (window.sfx.ctx.state === 'suspended') {
-    window.sfx.ctx.resume();
-    }
+  },
+
+  stopMusic: function() {
+    Object.values(this.sounds).forEach(s => {
+        if (s.loop) s.pause();
+    });
+
+    this.currentMusic = null;
+  },
+
+    correct: function() {
+    window.sfx.sounds.click.currentTime = 0;
+    window.sfx.sounds.click.play();
+    },
+
+    wrong: function() {
+    window.sfx.sounds.lose.currentTime = 0;
+    window.sfx.sounds.lose.play();
+    },
+
+    win: function() {
+    window.sfx.sounds.win.currentTime = 0;
+    window.sfx.sounds.win.play();
+    },
+
+    click: function() {
+    window.sfx.sounds.click2.currentTime = 0;
+    window.sfx.sounds.click2.play();
+    },
+
+  stopMusic: function() {
+    Object.values(this.sounds).forEach(s => {
+      if (s.loop) s.pause();
+    });
+  }
+};
+window.sfx.init();
+
+document.addEventListener("click", () => {
+  if(window.gameState.settings.music){
+    window.sfx.playMusic(
+      window.gameState.screen === "battle" ? "battle" : "theme"
+    );
+  }
 }, { once: true });
 
 
@@ -233,19 +259,36 @@ window.bgm = {
 
 window.toggleMusic = function(){
   const gs = window.gameState;
+
   gs.settings.music = !gs.settings.music;
 
   if(gs.settings.music){
-    window.bgm.play(gs.settings.musicTrack);
+
+    // 🔥 reset supaya bisa play ulang
+    window.sfx.currentMusic = null;
+
+    if(gs.screen === "battle"){
+      window.sfx.playMusic("battle");
+    } else {
+      window.sfx.playMusic("theme");
+    }
+
   } else {
-    window.bgm.stop();
+    window.sfx.stopMusic();
   }
 
   window.render();
 };
 
 window.toggleSound = function(){
-  window.gameState.settings.sound = !window.gameState.settings.sound;
+  const gs = window.gameState;
+
+  gs.settings.sound = !gs.settings.sound;
+
+  if(gs.settings.sound){
+    window.sfx.click();
+  }
+
   window.render();
 };
 // ==========================================
@@ -257,7 +300,7 @@ window.renderWelcomeScreen = function() {
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="glass-panel text-center max-w-md w-full fade-in">
                 <div class="text-6xl mb-4 animate-bounce">🏰</div>
-                <h1 class="text-4xl font-bold mb-2 text-yellow-400">Algebra Quest RPG</h1>
+                <h1 class="text-4xl font-bold mb-2 text-yellow-400">Algebra Quest</h1>
                 <p class="text-gray-300 mb-8">Jelajahi dunia matematika & kalahkan monster!</p>
                 
                 ${window.gameState.error ? `<div class="bg-red-500/80 text-white p-3 rounded mb-4 text-sm">${window.gameState.error}</div>` : ''}
@@ -322,6 +365,9 @@ window.render = function() {
             case 'profile':
                 html = window.renderProfileScreen();
                 break;
+            case 'shop':
+                html = window.renderShopScreen();
+                break;
             case 'developer':
                 html = window.renderDeveloperScreen();
                 break;
@@ -339,6 +385,11 @@ window.render = function() {
         console.error("Render Error:", e);
         html = `<div class='text-red-500 p-10 bg-slate-900'>Error Tampilan: ${e.message}<br>Cek Console (F12)</div>`;
     }
-    
+    if(window.gameState.screen === "battle"){
+        window.sfx.playMusic("battle");
+        } else {
+        window.sfx.playMusic("theme");
+        }
+
     app.innerHTML = html;
 };  

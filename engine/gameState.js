@@ -46,6 +46,23 @@ export const gameState = {
   ],
 
   title: "Pemula",
+
+  inventory: {
+      items: {
+        potion: 0,
+        megaPotion: 0
+      },
+      skills: {
+        fireSkill: 0
+      }
+    },
+
+  status: {
+    freezeEnemy: 0,
+    buffAttack: 0,
+    breakDefense: 0
+  },
+  
   enemy: null,
   currentQuestion: null,
   userAnswer: '',

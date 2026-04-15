@@ -50,6 +50,10 @@ window.renderHomeScreen = function () {
         🌍 Mulai Petualangan
       </button>
 
+      <button onclick="goTo('shop')" class="btn btn-yellow">
+        🏪 Shop
+      </button>
+
       <button onclick="goTo('history')" class="btn btn-blue">
         📜 Riwayat
       </button>

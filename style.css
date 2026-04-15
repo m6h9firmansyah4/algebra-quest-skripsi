@@ -34,6 +34,7 @@ body {
 .btn-green { background: #16a34a; color: white; }
 .btn-purple { background: #7c3aed; color: white; }
 .btn-red { background: #dc2626; color: white; }
+.btn-yellow { background: #f59e0b; color: white; }
 
 .btn:hover {
   transform: scale(1.03);

@@ -46,10 +46,120 @@ const worlds = {
     }
 };
 
-const shopItems = {
-    potion: { id: 'potion', name: 'Potion HP', price: 50, icon: '🍷', desc: '+50 HP', type: 'heal', value: 50 },
-    sword: { id: 'sword', name: 'Pedang Besi', price: 100, icon: '⚔️', desc: '+5 ATK', type: 'atk', value: 5 },
-    shield: { id: 'shield', name: 'Tameng Kayu', price: 100, icon: '🛡️', desc: '+5 DEF', type: 'def', value: 5 }
+window.shopItems = {
+  potion: { 
+    id: 'potion', 
+    name: 'Potion HP', 
+    price: 50, 
+    icon: '🧪', 
+    desc: '+50 HP', 
+    type: 'heal', 
+    value: 50 
+  },
+
+  megaPotion: {
+    id: 'megaPotion',
+    name: 'Mega Potion',
+    price: 100,
+    icon: '💉',
+    desc: '+100 HP',
+    type: 'heal',
+    value: 100
+  },
+
+  fireSkill: {
+    name: "Fire Blast",
+    icon: "🔥",
+    unlockLevel: 2,
+    type: "damage",
+    value: 30,
+    desc: 'Instant damage 30 HP',
+    price: 150
+  },
+
+  iceSkill: {
+    name: "Ice Storm",
+    icon: "❄️",
+    unlockLevel: 3,
+    type: "freeze",
+    duration: 2,
+    desc: 'Freeze enemy for 2 turns',
+    price: 200
+  },
+
+  windSkill: {
+    name: "Windstorm",
+    icon: "🌪️",
+    unlockLevel: 4,
+    type: "buff",
+    multiplier: 2,
+    duration: 1,
+    desc: 'Double damage for 1 turn',
+    price: 300
+  },
+
+  darkSkill: {
+    name: "Dark Strike",
+    icon: "🌑",
+    unlockLevel: 5,
+    type: "break",
+    duration: 2,
+    desc: 'Break enemy defense for 2 turns',
+    price: 400
+  },
+
+  rainbowSkill: {
+    name: "Rainbow Dash",
+    icon: "🌈",
+    unlockLevel: 4,
+    type: "ultimate",
+    desc: 'Disable enemy skills (Boss Only)',
+    price: 500
+  }
+};
+
+window.skillData = {
+
+  fireSkill: {
+    name: "Fire Blast",
+    icon: "🔥",
+    unlockLevel: 2,
+    type: "damage",
+    value: 30
+  },
+
+  iceSkill: {
+    name: "Ice Storm",
+    icon: "❄️",
+    unlockLevel: 3,
+    type: "freeze",
+    duration: 2
+  },
+
+  windSkill: {
+    name: "Windstorm",
+    icon: "🌪️",
+    unlockLevel: 4,
+    type: "buff",
+    multiplier: 2,
+    duration: 1
+  },
+
+  darkSkill: {
+    name: "Dark Strike",
+    icon: "🌑",
+    unlockLevel: 5,
+    type: "break",
+    duration: 2
+  },
+
+  rainbowSkill: {
+    name: "Rainbow Dash",
+    icon: "🌈",
+    unlockLevel: 4,
+    type: "ultimate"
+  }
+
 };
 
 // --- MULAI BATTLE (Hanya dipanggil SEKALI di awal stage) ---
@@ -168,9 +278,33 @@ window.renderBattleScreen = function() {
     <!-- ACTION BAR -->
     ${e.hp > 0 ? `
     <div class="action-bar mt-3">
-      <button onclick="setMode('attack')" class="btn btn-blue">⚔️ Attack</button>
+      <button onclick="usePotion()" class="btn btn-green">
+        Potion 
+        (🧪 ${gs.inventory.items.potion || 0} / 💉 ${gs.inventory.items.megaPotion || 0})
+      </button>
       <button onclick="setMode('defend')" class="btn btn-gray">🛡️ Defend</button>
-      <button onclick="setMode('skill')" class="btn btn-purple">⚡ Skill</button>
+      <div class="flex gap-2 flex-wrap">
+          ${Object.keys(gs.inventory.skills || {}).map(id => {
+            const skill = window.skillData[id];
+            const count = gs.inventory.skills[id];
+
+            if (!skill || count <= 0) return "";
+
+            // 🔒 LOCK LEVEL
+            if (gs.player.level < skill.unlockLevel) {
+              return `
+                <button class="btn btn-gray">
+                  🔒 Lv.${skill.unlockLevel}
+                </button>
+              `;
+            }
+            return `
+              <button onclick="useSkill('${id}')" class="btn btn-purple">
+                ${skill.icon} (${count})
+              </button>
+            `;
+          }).join("")}
+      </div>
     </div>
     ` : ""}
 
@@ -278,16 +412,9 @@ window.checkAnswer = function() {
     damage = applyStreakBonus(gs, damage);
     damage += getTitleBonus(gs);
 
-    let type = "circle";
-
-    if(gs.mode === "skill"){
-      damage *= 1.8;
-      type = "square";
-      gs.battleLog.push("⚡ SKILL HIT!");
-    }
-
-    if(gs.streak >= 3){
-      type = "triangle";
+    if(gs.status.buffAttack > 0){
+      damage *= 2;
+      gs.status.buffAttack--;
     }
 
     gs.enemy.hp -= damage;
@@ -307,6 +434,17 @@ window.checkAnswer = function() {
   // JAWABAN SALAH
   // =========================
   else {
+    if (gs.status.freezeEnemy > 0) {
+      gs.status.freezeEnemy--;
+      gs.battleLog.push("❄️ Enemy masih beku!");
+      window.render();
+      return;
+    }
+
+    if(gs.status.breakDefense > 0){
+      damage += 10;
+      gs.status.breakDefense--;
+    }
 
     window.sfx.wrong();
 
@@ -331,6 +469,110 @@ window.checkAnswer = function() {
 
   // 🔥 RESET MODE
   gs.mode = "attack";
+
+  window.render();
+};
+
+window.usePotion = function(){
+  const gs = window.gameState;
+
+  const inv = gs.inventory?.items || {};
+
+  // 🔥 PRIORITAS 1: MEGA POTION
+  if (inv.megaPotion && inv.megaPotion > 0) {
+
+    inv.megaPotion--;
+
+    gs.player.hp = Math.min(gs.player.hp + 100, gs.player.maxHp);
+
+    gs.battleLog.push("💉 Mega Potion digunakan! (+100 HP)");
+
+    window.sfx.correct?.();
+
+    window.render();
+    return;
+  }
+
+  // 🔥 PRIORITAS 2: POTION BIASA
+  if (inv.potion && inv.potion > 0) {
+
+    inv.potion--;
+
+    gs.player.hp = Math.min(gs.player.hp + 50, gs.player.maxHp);
+
+    gs.battleLog.push("🧪 Potion digunakan! (+50 HP)");
+
+    window.sfx.correct?.();
+
+    window.render();
+    return;
+  }
+
+  // ❌ TIDAK ADA POTION
+  alert("Potion habis!");
+};
+
+window.useSkill = function(skillId){
+  const gs = window.gameState;
+  const skill = window.skillData[skillId];
+
+  if (gs.player.level < skill.unlockLevel) {
+    alert("Level belum cukup!");
+    return;
+  }
+
+  if (!gs.inventory.skills[skillId] || gs.inventory.skills[skillId] <= 0) {
+    alert("Skill tidak tersedia!");
+    return;
+  }
+
+  gs.inventory.skills[skillId]--;
+
+  // =====================
+  // FIRE (DAMAGE)
+  // =====================
+  if(skill.type === "damage"){
+    gs.enemy.hp -= skill.value;
+    gs.battleLog.push(`🔥 Fire Blast! Damage ${skill.value}`);
+  }
+
+  // =====================
+  // ICE (FREEZE)
+  // =====================
+  if(skill.type === "freeze"){
+    gs.status.freezeEnemy = skill.duration;
+    gs.battleLog.push(`❄️ Enemy beku ${skill.duration} ronde!`);
+  }
+
+  // =====================
+  // WIND (BUFF)
+  // =====================
+  if(skill.type === "buff"){
+    gs.status.buffAttack = skill.duration;
+    gs.battleLog.push(`🌪️ Attack x2 aktif!`);
+  }
+
+  // =====================
+  // DARK (BREAK DEFENSE)
+  // =====================
+  if(skill.type === "break"){
+    gs.status.breakDefense = skill.duration;
+    gs.battleLog.push(`🌑 Defense musuh hancur!`);
+  }
+
+  // =====================
+  // RAINBOW (ULTIMATE)
+  // =====================
+  if(skill.type === "ultimate"){
+
+    if(!gs.enemy.isBoss){
+      gs.battleLog.push("🌈 Hanya bisa digunakan pada Boss!");
+      return;
+    }
+
+    gs.enemy.skillDisabled = true;
+    gs.battleLog.push("🌈 Skill musuh dinonaktifkan!");
+  }
 
   window.render();
 };
@@ -363,7 +605,7 @@ function winBattle() {
     window.sfx.win();
     const gs = window.gameState;
     const expGain = 50;
-    const goldGain = 20;
+    const goldGain = 2000;
     
     gs.player.exp += expGain;
     gs.player.gold += goldGain;
@@ -399,17 +641,30 @@ function winBattle() {
 }
 
 window.buyItem = function(itemId) {
-    const gs = window.gameState;
-    const item = shopItems[itemId];
-    
-    if (gs.player.gold >= item.price) {
-        gs.player.gold -= item.price;
-        if (item.type === 'heal') { gs.player.hp = Math.min(gs.player.hp + item.value, gs.player.maxHp); alert("HP Pulih!"); }
-        else if (item.type === 'atk') { gs.player.attack += item.value; alert("Attack Naik!"); }
-        else if (item.type === 'def') { gs.player.defense += item.value; alert("Defense Naik!"); }
-        window.saveProgress(gs);
-        window.render();
-    } else {
-        alert("Gold tidak cukup!");
-    }
+  const gs = window.gameState;
+  const item = shopItems[itemId];
+
+  if (gs.player.gold < item.price) {
+    alert("Gold tidak cukup!");
+    return;
+  }
+
+  gs.player.gold -= item.price;
+
+  if (item.type === 'heal') {
+    if (!gs.inventory.items[item.id]) gs.inventory.items[item.id] = 0;
+    gs.inventory.items[item.id]++;
+
+    alert(`${item.name} masuk inventory!`);
+  }
+
+  if (item.type === 'skill') {
+    if (!gs.inventory.skills[item.id]) gs.inventory.skills[item.id] = 0;
+    gs.inventory.skills[item.id]++;
+
+    alert(`Skill ${item.name} diperoleh!`);
+  }
+
+  window.saveProgress(gs);
+  window.render();
 };

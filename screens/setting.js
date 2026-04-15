@@ -38,8 +38,13 @@ window.renderSettingScreen = function () {
     <!-- MUSIC SELECT -->
     <div class="glass-panel mb-3">
       <div class="mb-2 font-bold">🎼 Musik Latar</div>
-      <button onclick="bgm.play('default')" class="btn btn-green">Default</button>
-      <button onclick="bgm.play('battle')" class="btn btn-purple">Battle</button>
+      <button onclick="window.sfx.playMusic('theme')" class="btn btn-green">
+        Default
+      </button>
+
+      <button onclick="window.sfx.playMusic('battle')" class="btn btn-purple">
+        Battle
+      </button>
     </div>
 
     <!-- SAVE -->
