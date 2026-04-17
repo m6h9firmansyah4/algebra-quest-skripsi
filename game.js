@@ -419,7 +419,7 @@ window.checkAnswer = function() {
 
     gs.enemy.hp -= damage;
 
-    spawnDamage(type, damage, "player"); // ✔ dari player ke enemy
+    spawnDamage("circle", damage, "player");
 
     gs.battleLog.push(`⚔️ Benar! Musuh kena ${damage} DMG.`);
     gs.feedback = `<span class="text-green-400 font-bold">BENAR!</span> ${q.explanation}`;

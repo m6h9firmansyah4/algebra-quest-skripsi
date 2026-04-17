@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/f
 import { gameState, defaultPlayerStats } from "./engine/gameState.js"; 
 import "./screens/profile.js";
 import "./screens/shop.js";
+import "./engine/guideSystem.js";
 
 
 
@@ -83,6 +84,14 @@ window.sfx = {
 window.sfx.init();
 
 document.addEventListener("click", () => {
+  GuideSystem.init() 
+  if(document.getElementById("guideBtn")) return;
+
+  if(!window.gameState.hasSeenGuide){
+    GuideSystem.start(GuideSystem.getStepsByScreen());
+    window.gameState.hasSeenGuide = true;
+  }
+
   if(window.gameState.settings.music){
     window.sfx.playMusic(
       window.gameState.screen === "battle" ? "battle" : "theme"

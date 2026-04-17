@@ -163,54 +163,48 @@ function stage3w1() {
 
 // Stage 4
 function stage4w1() {
-
   const ops = ["+", "-", "×", "÷"];
 
-  // jumlah operasi 3–5
   let totalOps = Math.floor(Math.random() * 3) + 3;
 
   let numbers = [];
   let operators = [];
 
-  // angka pertama
   let current = Math.floor(Math.random() * 11) - 5;
   numbers.push(current);
 
   for (let i = 0; i < totalOps; i++) {
-
     let op = ops[Math.floor(Math.random() * ops.length)];
-
     let next;
 
     if (op === "÷") {
       let divisor = Math.floor(Math.random() * 5) + 1;
       next = divisor;
-      current = current / divisor;
+      current = round2(current / divisor);
     } else if (op === "×") {
       let mult = Math.floor(Math.random() * 5) + 1;
       next = mult;
-      current = current * mult;
+      current = round2(current * mult);
     } else if (op === "+") {
       let add = Math.floor(Math.random() * 11) - 5;
       next = add;
-      current = current + add;
+      current = round2(current + add);
     } else {
       let sub = Math.floor(Math.random() * 11) - 5;
       next = sub;
-      current = current - sub;
+      current = round2(current - sub);
     }
 
     numbers.push(next);
     operators.push(op);
   }
 
-  // buat string soal
-  let expr = formatInt(numbers[0]);
+  let expr = formatValue(numbers[0]);
   for (let i = 0; i < operators.length; i++) {
-    expr += ` ${operators[i]} ${formatInt(numbers[i + 1])}`;
+    expr = `(${expr} ${operators[i]} ${formatValue(numbers[i + 1])})`;
   }
 
-  let correct = current;
+  let correct = round2(current);
 
   return createQuestion({
     id: "stage4w1",
@@ -354,7 +348,6 @@ function stage7w1() {
 
 // Stage 8
 function stage8w1() {
-
   function randomValue() {
     let type = Math.floor(Math.random()*3);
 
@@ -376,18 +369,18 @@ function stage8w1() {
   }
 
   let arr = [randomValue(), randomValue(), randomValue(), randomValue()];
-
   let ascending = Math.random() < 0.5;
 
   let sorted = [...arr].sort((a,b)=> ascending ? a.val - b.val : b.val - a.val);
+  let joinSymbol = ascending ? " < " : " > ";
 
-  let correct = sorted.map(x=>x.str).join(" < ");
+  let correct = sorted.map(x => x.str).join(joinSymbol);
 
   let options = [
     correct,
-    arr.map(x=>x.str).join(" < "),
-    sorted.slice().reverse().map(x=>x.str).join(" < "),
-    shuffle(arr).map(x=>x.str).join(" < ")
+    arr.map(x => x.str).join(joinSymbol),
+    [...sorted].reverse().map(x => x.str).join(joinSymbol),
+    shuffle([...arr]).map(x => x.str).join(joinSymbol)
   ];
 
   return createQuestion({
@@ -408,17 +401,11 @@ function stage8w1() {
 
 // Stage 9
 function stage9w1() {
-
   let n = Math.floor(Math.random() * 100) + 2;
-
   let isPrimeActual = isPrime(n);
 
-  // kadang kita balik pernyataan
-  let statementTruth = Math.random() < 0.5 ? isPrimeActual : !isPrimeActual;
-
   let question = `Bilangan ${n} adalah bilangan prima. Pernyataan tersebut ...`;
-
-  let correct = statementTruth ? "Benar" : "Salah";
+  let correct = isPrimeActual ? "Benar" : "Salah";
 
   return createQuestion({
     id: "stage9w1",
@@ -431,7 +418,6 @@ function stage9w1() {
     difficulty: "medium"
   });
 }
-
 // Stage 10
 function stage10w1() {
 

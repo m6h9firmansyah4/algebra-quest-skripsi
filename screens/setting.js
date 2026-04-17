@@ -25,28 +25,6 @@ window.renderSettingScreen = function () {
       </div>
     </div>
 
-    <!-- THEME -->
-    <div class="glass-panel mb-3">
-      <div class="mb-2 font-bold">🎨 Tema</div>
-      <div class="grid grid-cols-3 gap-2">
-        <button onclick="setTheme('default')" class="btn btn-blue">Default</button>
-        <button onclick="setTheme('algebra')" class="btn btn-orange">Algebra</button>
-        <button onclick="setTheme('geometry')" class="btn btn-blue">Geometry</button>
-      </div>
-    </div>
-
-    <!-- MUSIC SELECT -->
-    <div class="glass-panel mb-3">
-      <div class="mb-2 font-bold">🎼 Musik Latar</div>
-      <button onclick="window.sfx.playMusic('theme')" class="btn btn-green">
-        Default
-      </button>
-
-      <button onclick="window.sfx.playMusic('battle')" class="btn btn-purple">
-        Battle
-      </button>
-    </div>
-
     <!-- SAVE -->
     <button onclick="saveProgress(window.gameState)" 
     class="btn btn-green w-full">

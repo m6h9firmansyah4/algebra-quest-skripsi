@@ -11,6 +11,19 @@ function formatConstant(num) {
   return num > 0 ? ` + ${num}` : ` - ${Math.abs(num)}`;
 }
 
+function formatTerm(coef, variable, isFirst = false) {
+  if (coef === 0) return "";
+
+  const absCoef = Math.abs(coef);
+  const core = absCoef === 1 ? `${variable}` : `${absCoef}${variable}`;
+
+  if (isFirst) {
+    return coef < 0 ? `-${core}` : core;
+  }
+
+  return coef < 0 ? ` - ${core}` : ` + ${core}`;
+}
+
 function generateOptionsText(correct, wrongList) {
   let options = new Set();
   options.add(correct);
@@ -112,6 +125,7 @@ function stage2w2() {
 // ===============================
 // STAGE 3 – KOEFISIEN VARIABEL DINAMIS
 // ===============================
+
 function stage3w2() {
 
   const vars = ["x", "y", "a", "b", "m", "n", "p", "q"];
