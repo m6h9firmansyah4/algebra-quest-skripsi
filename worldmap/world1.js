@@ -214,7 +214,7 @@ function stage4w1() {
     options: generateOptionsNumber(correct),
     correct,
     damage: 25,
-    difficulty: "medium"
+    difficulty: "medium",
   });
 }
 
