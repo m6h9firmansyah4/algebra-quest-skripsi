@@ -7,8 +7,8 @@ const MAP_WIDTH = 8552;
 const MAP_HEIGHT = 2944;
 const NODE_VISUAL_SCALE = MAP_WIDTH / BASE_COORD_WIDTH; 
 
-const ISLAND_INITIAL_ZOOM = 1.55;
-const ISLAND_VERTICAL_BIAS = -0.025;
+const ISLAND_INITIAL_ZOOM = 1.40;
+const ISLAND_VERTICAL_BIAS = -0.020;
 
 // ===============================
 // RENDER MAP SCREEN

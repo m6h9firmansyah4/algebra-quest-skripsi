@@ -1,3 +1,5 @@
+
+
 window.renderHomeScreen = function () {
   const gs = window.gameState;
 
@@ -61,8 +63,8 @@ window.renderHomeScreen = function () {
         🌍 Mulai Petualangan
       </button>
 
-      <button id="shopBtn"  onclick="goTo('shop')" class="btn btn-yellow">
-        🏪 Shop
+      <button id="tutorialBtn" onclick="goTo('tutorial')" class="btn btn-blue">
+        📘 Tutorial Bermain
       </button>
 
       <button id="historyBtn" onclick="goTo('history')" class="btn btn-blue">

@@ -6,21 +6,32 @@ import { shuffle, generateOptionsNumber } from "../engine/mathUtils.js";
 
 // ---------- HELPER UTILITIES ----------
 function generateOptionsText(correct, wrongList) {
-  let options = new Set();
-  options.add(correct);
+  let pool = [...new Set((wrongList || []).filter(opt => opt !== correct))];
+  let options = [correct, ...pool];
 
-  while (options.size < 4) {
-    let rand = wrongList[Math.floor(Math.random() * wrongList.length)];
-    if (rand !== correct) options.add(rand);
+  return shuffle(options).slice(0, 4);
+}
+
+function formatInt(n, isLeading = false) {
+  if (n >= 0) return `${n}`;
+  return isLeading ? `${n}` : `(${n})`;
+}
+
+function formatValue(n, isLeading = false) {
+  const v = round2(n);
+
+  if (Number.isInteger(v)) {
+    return v >= 0 ? `${v}` : (isLeading ? `${v}` : `(${v})`);
   }
 
-  return shuffle([...options]);
+  return v >= 0
+    ? v.toFixed(2)
+    : (isLeading ? `${v.toFixed(2)}` : `(${v.toFixed(2)})`);
 }
 
-function formatInt(n) {
-  return n >= 0 ? `${n}` : `(${n})`;
+function round2(n) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
 }
-
 function isPrime(n) {
   if (n < 2) return false;
   for (let i = 2; i * i <= n; i++) {
@@ -67,6 +78,189 @@ function sqrtSymbol(n) {
   return `√${n}`;
 }
 
+function toSuperscriptDigits(str) {
+  const map = {
+    "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴",
+    "5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","-":"⁻"
+  };
+  return String(str).split("").map(ch => map[ch] || ch).join("");
+}
+
+function toSubscriptDigits(str) {
+  const map = {
+    "0":"₀","1":"₁","2":"₂","3":"₃","4":"₄",
+    "5":"₅","6":"₆","7":"₇","8":"₈","9":"₉","-":"₋"
+  };
+  return String(str).split("").map(ch => map[ch] || ch).join("");
+}
+
+function formatFractionText(num, den) {
+  return `${toSuperscriptDigits(num)}⁄${toSubscriptDigits(den)}`;
+}
+
+function formatMixedNumberText(whole, num, den) {
+  return `${whole} ${formatFractionText(num, den)}`;
+}
+
+function formatSimplifiedFractionText(num, den, preferMixed = false) {
+  const factor = gcd(num, den);
+  let n = num / factor;
+  let d = den / factor;
+
+  if (d === 1) return `${n}`;
+
+  if (preferMixed && Math.abs(n) > d) {
+    const whole = Math.trunc(n / d);
+    const rem = Math.abs(n % d);
+
+    if (rem === 0) return `${whole}`;
+    return formatMixedNumberText(whole, rem, d);
+  }
+
+  return formatFractionText(n, d);
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function buildExpressionString(values, ops) {
+  let tokens = [formatValue(values[0], true)];
+
+  for (let i = 0; i < ops.length; i++) {
+    tokens.push(ops[i], formatValue(values[i + 1]));
+  }
+
+  return tokens.join(" ");
+}
+
+function evaluateLinear(values, ops) {
+  let nums = [...values];
+  let operators = [...ops];
+
+  let i = 0;
+  while (i < operators.length) {
+    if (operators[i] === "×" || operators[i] === "÷") {
+      if (operators[i] === "÷" && nums[i + 1] === 0) return null;
+
+      let result =
+        operators[i] === "×"
+          ? nums[i] * nums[i + 1]
+          : nums[i] / nums[i + 1];
+
+      if (!Number.isFinite(result)) return null;
+
+      nums.splice(i, 2, round2(result));
+      operators.splice(i, 1);
+    } else {
+      i++;
+    }
+  }
+
+  let finalResult = nums[0];
+  for (let j = 0; j < operators.length; j++) {
+    if (operators[j] === "+") {
+      finalResult = round2(finalResult + nums[j + 1]);
+    } else {
+      finalResult = round2(finalResult - nums[j + 1]);
+    }
+
+    if (!Number.isFinite(finalResult)) return null;
+  }
+
+  return round2(finalResult);
+}
+
+function evaluateLinearIntegerOnly(values, ops) {
+  let nums = [...values];
+  let operators = [...ops];
+
+  let i = 0;
+  while (i < operators.length) {
+    if (operators[i] === "×" || operators[i] === "÷") {
+      if (operators[i] === "÷") {
+        if (nums[i + 1] === 0) return null;
+        if (!Number.isInteger(nums[i] / nums[i + 1])) return null;
+      }
+
+      let result =
+        operators[i] === "×"
+          ? nums[i] * nums[i + 1]
+          : nums[i] / nums[i + 1];
+
+      if (!Number.isFinite(result) || !Number.isInteger(result)) return null;
+
+      nums.splice(i, 2, result);
+      operators.splice(i, 1);
+    } else {
+      i++;
+    }
+  }
+
+  let finalResult = nums[0];
+  for (let j = 0; j < operators.length; j++) {
+    if (operators[j] === "+") {
+      finalResult = finalResult + nums[j + 1];
+    } else {
+      finalResult = finalResult - nums[j + 1];
+    }
+
+    if (!Number.isFinite(finalResult) || !Number.isInteger(finalResult)) return null;
+  }
+
+  return finalResult;
+}
+
+function buildStage4ProblemIntegerOnly(values, ops, useParentheses = true) {
+  if (!useParentheses) {
+    return {
+      expr: buildExpressionString(values, ops),
+      value: evaluateLinearIntegerOnly(values, ops)
+    };
+  }
+
+  const maxStart = values.length - 2;
+  const start = randInt(0, maxStart);
+  const end = randInt(start + 1, Math.min(values.length - 1, start + 2));
+
+  const innerValues = values.slice(start, end + 1);
+  const innerOps = ops.slice(start, end);
+  const innerValue = evaluateLinearIntegerOnly(innerValues, innerOps);
+
+  if (innerValue === null) return null;
+
+  const outerValues = [
+    ...values.slice(0, start),
+    innerValue,
+    ...values.slice(end + 1)
+  ];
+
+  const outerOps = [
+    ...ops.slice(0, start),
+    ...ops.slice(end)
+  ];
+
+  const finalValue = evaluateLinearIntegerOnly(outerValues, outerOps);
+  if (finalValue === null) return null;
+
+  let tokens = [formatValue(values[0], true)];
+  for (let i = 0; i < ops.length; i++) {
+    tokens.push(ops[i], formatValue(values[i + 1]));
+  }
+
+  const startToken = start * 2;
+  const endToken = end * 2;
+
+  const innerExpr = tokens.slice(startToken, endToken + 1).join(" ");
+  tokens.splice(startToken, endToken - startToken + 1, `(${innerExpr})`);
+
+  return {
+    expr: tokens.join(" "),
+    value: finalValue
+  };
+}
+
+
 // ---------- TEMPLATE ----------
 
 function createQuestion({
@@ -91,25 +285,35 @@ function createQuestion({
   };
 }
 
+function makeBossPhase(questionObj, phaseId, damage) {
+  return {
+    ...questionObj,
+    id: phaseId,
+    stage: 17,
+    damage,
+    difficulty: "boss"
+  };
+}
+
 // ===============================
 // ZONA 1 – BILANGAN BULAT
 // ===============================
 
 // Stage 1
 function stage1w1() {
+  const limit = 40;
 
-  let a = Math.floor(Math.random() * 21) - 10;
-  let b = Math.floor(Math.random() * 21) - 10;
+  let a = randInt(-limit, limit);
+  let b = randInt(-limit, limit);
 
   let op = Math.random() < 0.5 ? "+" : "-";
-
   let correct = op === "+" ? a + b : a - b;
 
   return createQuestion({
     id: "stage1w1",
     stage: 1,
     topic: "Penjumlahan & Pengurangan Bilangan Bulat",
-    question: `${formatInt(a)} ${op} ${formatInt(b)} = ?`,
+    question: `${formatInt(a, true)} ${op} ${formatInt(b)} = ... `,
     options: generateOptionsNumber(correct),
     correct,
     damage: 10,
@@ -119,9 +323,10 @@ function stage1w1() {
 
 // Stage 2
 function stage2w1() {
+  const limit = 20;
 
-  let a = Math.floor(Math.random() * 13) - 6;
-  let b = Math.floor(Math.random() * 13) - 6;
+  let a = randInt(-limit, limit);
+  let b = randInt(-limit, limit);
 
   let correct = a * b;
 
@@ -129,7 +334,7 @@ function stage2w1() {
     id: "stage2w1",
     stage: 2,
     topic: "Perkalian Bilangan Bulat",
-    question: `${formatInt(a)} × ${formatInt(b)} = ?`,
+    question: `${formatInt(a, true)} × ${formatInt(b)} = ... `,
     options: generateOptionsNumber(correct),
     correct,
     damage: 15,
@@ -138,22 +343,27 @@ function stage2w1() {
 }
 
 function stage3w1() {
+  const resultLimit = 20;
+  const divisorLimit = 10;
 
-  let result = Math.floor(Math.random() * 10) - 5;
-  if (result === 0) result = 2;
+  let result;
+  do {
+    result = randInt(-resultLimit, resultLimit);
+  } while (result === 0);
 
-  let divisor = Math.floor(Math.random() * 9) - 4;
-  if (divisor === 0) divisor = 2;
+  let divisor;
+  do {
+    divisor = randInt(-divisorLimit, divisorLimit);
+  } while (divisor === 0);
 
   let dividend = result * divisor;
-
   let correct = result;
 
   return createQuestion({
     id: "stage3w1",
     stage: 3,
     topic: "Pembagian Bilangan Bulat",
-    question: `${formatInt(dividend)} ÷ ${formatInt(divisor)} = ?`,
+    question: `${formatInt(dividend, true)} ÷ ${formatInt(divisor)} = ... `,
     options: generateOptionsNumber(correct),
     correct,
     damage: 18,
@@ -165,56 +375,58 @@ function stage3w1() {
 function stage4w1() {
   const ops = ["+", "-", "×", "÷"];
 
-  let totalOps = Math.floor(Math.random() * 3) + 3;
+  const numberLimit = 25;
+  const divisorLimit = 10;
 
-  let numbers = [];
-  let operators = [];
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const totalOps = randInt(3, 4);
 
-  let current = Math.floor(Math.random() * 11) - 5;
-  numbers.push(current);
+    let values = [randInt(-numberLimit, numberLimit)];
+    let operators = [];
 
-  for (let i = 0; i < totalOps; i++) {
-    let op = ops[Math.floor(Math.random() * ops.length)];
-    let next;
+    for (let i = 0; i < totalOps; i++) {
+      const op = ops[Math.floor(Math.random() * ops.length)];
+      let next;
 
-    if (op === "÷") {
-      let divisor = Math.floor(Math.random() * 5) + 1;
-      next = divisor;
-      current = round2(current / divisor);
-    } else if (op === "×") {
-      let mult = Math.floor(Math.random() * 5) + 1;
-      next = mult;
-      current = round2(current * mult);
-    } else if (op === "+") {
-      let add = Math.floor(Math.random() * 11) - 5;
-      next = add;
-      current = round2(current + add);
-    } else {
-      let sub = Math.floor(Math.random() * 11) - 5;
-      next = sub;
-      current = round2(current - sub);
+      if (op === "÷") {
+        next = randInt(1, divisorLimit);
+      } else if (op === "×") {
+        next = randInt(-6, 6);
+        if (next === 0) next = 2;
+      } else {
+        next = randInt(-numberLimit, numberLimit);
+      }
+
+      operators.push(op);
+      values.push(next);
     }
 
-    numbers.push(next);
-    operators.push(op);
-  }
+    const useParentheses = Math.random() < 0.6;
+    const problem = buildStage4ProblemIntegerOnly(values, operators, useParentheses);
 
-  let expr = formatValue(numbers[0]);
-  for (let i = 0; i < operators.length; i++) {
-    expr = `(${expr} ${operators[i]} ${formatValue(numbers[i + 1])})`;
-  }
+    if (!problem || problem.value === null) continue;
 
-  let correct = round2(current);
+    return createQuestion({
+      id: "stage4w1",
+      stage: 4,
+      topic: "Operasi Campuran Bilangan Bulat",
+      question: `${problem.expr} = ... `,
+      options: generateOptionsNumber(problem.value),
+      correct: problem.value,
+      damage: 25,
+      difficulty: "medium"
+    });
+  }
 
   return createQuestion({
     id: "stage4w1",
     stage: 4,
     topic: "Operasi Campuran Bilangan Bulat",
-    question: `${expr} = ?`,
-    options: generateOptionsNumber(correct),
-    correct,
+    question: `12 ÷ 3 + 4 × 2 = ... `,
+    options: generateOptionsNumber(12),
+    correct: 12,
     damage: 25,
-    difficulty: "medium",
+    difficulty: "medium"
   });
 }
 
@@ -224,42 +436,70 @@ function stage4w1() {
 
 // Stage 5
 function stage5w1() {
-
   let type = Math.random() < 0.5 ? "biasa" : "campuran";
 
-  let num, den, whole = 0;
+  let num, den, whole = 0, fracNum = 0;
 
   if (type === "biasa") {
     num = Math.floor(Math.random() * 18) + 2;
     den = Math.floor(Math.random() * 18) + 2;
   } else {
     whole = Math.floor(Math.random() * 5) + 1;
-    num = Math.floor(Math.random() * 8) + 1;
     den = Math.floor(Math.random() * 8) + 2;
-    num = whole * den + num; // jadi pecahan biasa
+    fracNum = Math.floor(Math.random() * (den - 1)) + 1; // 1 .. den-1
+    num = whole * den + fracNum;
   }
 
   let factor = gcd(num, den);
   let simpNum = num / factor;
   let simpDen = den / factor;
 
-  let correct = `${simpNum}/${simpDen}`;
+  let correct = formatSimplifiedFractionText(num, den, type === "campuran");
 
   let question = type === "biasa"
-    ? `Sederhanakan ${num}/${den}`
-    : `Sederhanakan ${whole} ${num - whole*den}/${den}`;
+    ? `Sederhanakan ${formatFractionText(num, den)}`
+    : `Sederhanakan ${formatMixedNumberText(whole, fracNum, den)}`;
+
+  let wrong1Num = num;
+  let wrong1Den = den;
+  if (formatFractionText(wrong1Num, wrong1Den) === correct) {
+    wrong1Num = simpNum + 1;
+    wrong1Den = simpDen;
+  }
+
+  let wrong2Num = simpNum;
+  let wrong2Den = simpDen + 1;
+  if (
+    formatFractionText(wrong2Num, wrong2Den) === correct ||
+    (wrong2Num === wrong1Num && wrong2Den === wrong1Den)
+  ) {
+    wrong2Num = simpNum + 2;
+    wrong2Den = simpDen;
+  }
+
+  let wrong3Num = simpNum + 1;
+  let wrong3Den = simpDen + 1;
+  if (
+    formatFractionText(wrong3Num, wrong3Den) === correct ||
+    (wrong3Num === wrong1Num && wrong3Den === wrong1Den) ||
+    (wrong3Num === wrong2Num && wrong3Den === wrong2Den)
+  ) {
+    wrong3Num = simpNum * 2;
+    wrong3Den = simpDen + 1;
+  }
+
+  let wrong1 = formatFractionText(wrong1Num, wrong1Den);
+  let wrong2 = formatFractionText(wrong2Num, wrong2Den);
+  let wrong3 = formatFractionText(wrong3Num, wrong3Den);
+
+  let options = shuffle([correct, wrong1, wrong2, wrong3]);
 
   return createQuestion({
     id: "stage5w1",
     stage: 5,
     topic: "Penyederhanaan Pecahan",
     question,
-    options: generateOptionsText(correct, [
-      `${num}/${den}`,
-      `${simpNum}/${den}`,
-      `${num}/${simpDen}`,
-      `${simpNum * 2}/${simpDen * 2}`
-    ]),
+    options,
     correct,
     damage: 20,
     difficulty: "medium"
@@ -268,7 +508,6 @@ function stage5w1() {
 
 // Stage 6
 function stage6w1() {
-
   const denominators = [2, 4, 5, 8, 10];
 
   let type = Math.random() < 0.5 ? "biasa" : "campuran";
@@ -276,30 +515,47 @@ function stage6w1() {
   let num, den, whole = 0;
 
   den = denominators[Math.floor(Math.random() * denominators.length)];
-  num = Math.floor(Math.random() * den);
 
   if (type === "campuran") {
     whole = Math.floor(Math.random() * 4) + 1;
+    num = Math.floor(Math.random() * (den - 1)) + 1;
+  } else {
+    num = Math.floor(Math.random() * den);
   }
 
   let value = whole + num / den;
   let correct = value.toFixed(2);
 
   let question = type === "biasa"
-    ? `Ubah ${num}/${den} ke bentuk desimal`
-    : `Ubah ${whole} ${num}/${den} ke bentuk desimal`;
+    ? `Ubah ${formatFractionText(num, den)} ke bentuk desimal`
+    : `Ubah ${formatMixedNumberText(whole, num, den)} ke bentuk desimal`;
+
+  let wrongCandidates = [
+    (value + 0.10).toFixed(2),
+    (value - 0.10).toFixed(2),
+    (value + 0.20).toFixed(2),
+    (value - 0.20).toFixed(2),
+    (value + 1).toFixed(2),
+    (value - 1).toFixed(2)
+  ];
+
+  let uniqueWrongs = [...new Set(wrongCandidates.filter(v => v !== correct))];
+
+  while (uniqueWrongs.length < 3) {
+    let extra = (value + (Math.random() * 2 - 1)).toFixed(2);
+    if (extra !== correct && !uniqueWrongs.includes(extra)) {
+      uniqueWrongs.push(extra);
+    }
+  }
+
+  let options = shuffle([correct, ...uniqueWrongs.slice(0, 3)]);
 
   return createQuestion({
     id: "stage6w1",
     stage: 6,
     topic: "Pecahan ke Desimal",
     question,
-    options: generateOptionsText(correct, [
-      (value + 0.1).toFixed(2),
-      (value - 0.1).toFixed(2),
-      (value * 10).toFixed(2),
-      (value / 10).toFixed(2)
-    ]),
+    options,
     correct,
     damage: 20,
     difficulty: "medium"
@@ -307,30 +563,27 @@ function stage6w1() {
 }
 
 // Stage 7
-function stage7w1() {
+function randomFractionValue() {
+  let type = Math.floor(Math.random() * 3);
 
-  function randomValue() {
-    let type = Math.floor(Math.random()*3);
-
-    if (type === 0) {
-      let a = Math.floor(Math.random()*8)+1;
-      let b = Math.floor(Math.random()*8)+2;
-      return { str: `${a}/${b}`, val: a/b };
-    }
-    else if (type === 1) {
-      let whole = Math.floor(Math.random()*4)+1;
-      let a = Math.floor(Math.random()*5)+1;
-      let b = Math.floor(Math.random()*5)+2;
-      return { str: `${whole} ${a}/${b}`, val: whole + a/b };
-    }
-    else {
-      let d = (Math.random()*5).toFixed(2);
-      return { str: d, val: parseFloat(d) };
-    }
+  if (type === 0) {
+    let a = Math.floor(Math.random() * 8) + 1;
+    let b = Math.floor(Math.random() * 8) + 2;
+    return { str: formatFractionText(a, b), val: a / b };
+  } else if (type === 1) {
+    let whole = Math.floor(Math.random() * 4) + 1;
+    let b = Math.floor(Math.random() * 5) + 2;
+    let a = Math.floor(Math.random() * (b - 1)) + 1;
+    return { str: formatMixedNumberText(whole, a, b), val: whole + a / b };
+  } else {
+    let d = (Math.random() * 5).toFixed(2);
+    return { str: d, val: parseFloat(d) };
   }
+}
 
-  let left = randomValue();
-  let right = randomValue();
+function stage7w1() {
+  let left = randomFractionValue();
+  let right = randomFractionValue();
 
   let correct = left.val > right.val ? ">" : left.val < right.val ? "<" : "=";
 
@@ -339,7 +592,7 @@ function stage7w1() {
     stage: 7,
     topic: "Perbandingan Nilai",
     question: `${left.str} ... ${right.str}`,
-    options: ["<", ">", "=", "tidak tahu"],
+    options: ["<", ">", "=", "tidak dapat ditentukan"],
     correct,
     damage: 25,
     difficulty: "medium"
@@ -348,47 +601,48 @@ function stage7w1() {
 
 // Stage 8
 function stage8w1() {
-  function randomValue() {
-    let type = Math.floor(Math.random()*3);
-
-    if (type === 0) {
-      let a = Math.floor(Math.random()*8)+1;
-      let b = Math.floor(Math.random()*8)+2;
-      return { str: `${a}/${b}`, val: a/b };
-    }
-    else if (type === 1) {
-      let whole = Math.floor(Math.random()*4)+1;
-      let a = Math.floor(Math.random()*5)+1;
-      let b = Math.floor(Math.random()*5)+2;
-      return { str: `${whole} ${a}/${b}`, val: whole + a/b };
-    }
-    else {
-      let d = (Math.random()*5).toFixed(2);
-      return { str: d, val: parseFloat(d) };
+  let arr = [];
+  while (arr.length < 4) {
+    let item = randomFractionValue();
+    if (!arr.some(x => Math.abs(x.val - item.val) < 1e-9)) {
+      arr.push(item);
     }
   }
 
-  let arr = [randomValue(), randomValue(), randomValue(), randomValue()];
   let ascending = Math.random() < 0.5;
 
-  let sorted = [...arr].sort((a,b)=> ascending ? a.val - b.val : b.val - a.val);
+  let sorted = [...arr].sort((a, b) => ascending ? a.val - b.val : b.val - a.val);
   let joinSymbol = ascending ? " < " : " > ";
 
   let correct = sorted.map(x => x.str).join(joinSymbol);
 
-  let options = [
+  let optionPool = [
     correct,
     arr.map(x => x.str).join(joinSymbol),
-    [...sorted].reverse().map(x => x.str).join(joinSymbol),
-    shuffle([...arr]).map(x => x.str).join(joinSymbol)
+    [...sorted].reverse().map(x => x.str).join(joinSymbol)
   ];
+
+  while (optionPool.length < 6) {
+    optionPool.push(shuffle([...arr]).map(x => x.str).join(joinSymbol));
+  }
+
+  let options = [...new Set(optionPool)];
+
+  while (options.length < 4) {
+    let candidate = shuffle([...arr]).map(x => x.str).join(joinSymbol);
+    if (!options.includes(candidate)) {
+      options.push(candidate);
+    }
+  }
+
+  options = shuffle(options.slice(0, 4));
 
   return createQuestion({
     id: "stage8w1",
     stage: 8,
     topic: "Mengurutkan Bilangan",
-    question: `Urutkan dari ${ascending ? "terkecil ke terbesar" : "terbesar ke terkecil"}: ${arr.map(x=>x.str).join(", ")}`,
-    options: shuffle(options),
+    question: `Urutkan dari ${ascending ? "terkecil ke terbesar" : "terbesar ke terkecil"}: ${arr.map(x => x.str).join(", ")}`,
+    options,
     correct,
     damage: 30,
     difficulty: "hard"
@@ -401,7 +655,7 @@ function stage8w1() {
 
 // Stage 9
 function stage9w1() {
-  let n = Math.floor(Math.random() * 100) + 2;
+  let n = Math.floor(Math.random() * 501); // 0 sampai 500
   let isPrimeActual = isPrime(n);
 
   let question = `Bilangan ${n} adalah bilangan prima. Pernyataan tersebut ...`;
@@ -418,23 +672,48 @@ function stage9w1() {
     difficulty: "medium"
   });
 }
+
 // Stage 10
 function stage10w1() {
+  const primePool = [2, 2, 2, 3, 3, 5, 5, 7];
 
-  let n = Math.floor(Math.random() * 900) + 100; // 100–999
+  let factors, n;
+  do {
+    factors = [];
+    const factorCount = Math.random() < 0.5 ? 3 : 4;
 
-  let correct = primeFactorization(n);
+    for (let i = 0; i < factorCount; i++) {
+      factors.push(primePool[randInt(0, primePool.length - 1)]);
+    }
 
-  let wrong1 = `${n}`; // tidak difaktorkan
-  let wrong2 = primeFactorization(n).split(" × ").reverse().join(" × ");
-  let wrong3 = `${Math.floor(n/2)} × 2`;
+    n = factors.reduce((a, b) => a * b, 1);
+  } while (n < 100 || n > 999);
+
+  factors.sort((a, b) => a - b);
+  const correct = factors.join(" × ");
+
+  const wrongCandidates = [
+    `${n}`, // belum difaktorkan
+    `${factors[0] * factors[1]} × ${factors.slice(2).join(" × ")}`, // ada faktor komposit
+    `${factors[0]} × ${factors[1]} × ${factors.slice(2).reduce((a, b) => a * b, 1)}`, // gabung faktor belakang
+    `${factors.map((f, i) => i === 0 ? f + 1 : f).join(" × ")}` // salah satu faktor diubah
+  ];
+
+  let options = [correct, ...new Set(wrongCandidates.filter(opt => opt !== correct))];
+
+  while (options.length < 4) {
+    const extra = `${n + randInt(1, 9)}`;
+    if (!options.includes(extra)) options.push(extra);
+  }
+
+  options = shuffle(options.slice(0, 4));
 
   return createQuestion({
     id: "stage10w1",
     stage: 10,
     topic: "Faktorisasi Prima",
     question: `Faktorisasi prima dari ${n} adalah ...`,
-    options: shuffle([correct, wrong1, wrong2, wrong3]),
+    options,
     correct,
     damage: 25,
     difficulty: "medium"
@@ -447,9 +726,12 @@ function stage11w1() {
   let count = Math.random() < 0.5 ? 2 : 3;
 
   let nums = [];
-  for (let i = 0; i < count; i++) {
-    nums.push(Math.floor(Math.random() * 20) + 2);
-  }
+    while (nums.length < count) {
+      let candidate = Math.floor(Math.random() * 20) + 2;
+      if (!nums.includes(candidate)) {
+        nums.push(candidate);
+      }
+    }
 
   let type = Math.random() < 0.5 ? "FPB" : "KPK";
 
@@ -490,8 +772,11 @@ function stage12w1() {
 
   if (type === 0) {
     // FPB pembagian barang
-    let item1 = items[Math.floor(Math.random() * items.length)];
-    let item2 = items[Math.floor(Math.random() * items.length)];
+  let item1, item2;
+    do {
+      item1 = items[Math.floor(Math.random() * items.length)];
+      item2 = items[Math.floor(Math.random() * items.length)];
+    } while (item1 === item2);
 
     correct = gcd(a, b);
 
@@ -511,8 +796,11 @@ function stage12w1() {
     // KPK jadwal kegiatan
     let activity = activities[Math.floor(Math.random() * activities.length)];
 
-    let p = Math.floor(Math.random() * 6) + 3; // 3–8
-    let q = Math.floor(Math.random() * 6) + 3;
+    let p, q;
+      do {
+        p = Math.floor(Math.random() * 6) + 3;
+        q = Math.floor(Math.random() * 6) + 3;
+      } while (p === q);
 
     correct = lcm(p, q);
 
@@ -523,8 +811,11 @@ function stage12w1() {
     // KPK peristiwa berulang
     let event = events[Math.floor(Math.random() * events.length)];
 
-    let p = Math.floor(Math.random() * 6) + 2;
-    let q = Math.floor(Math.random() * 6) + 2;
+  let p, q;
+    do {
+      p = Math.floor(Math.random() * 6) + 2;
+      q = Math.floor(Math.random() * 6) + 2;
+    } while (p === q);
 
     correct = lcm(p, q);
 
@@ -549,7 +840,6 @@ function stage12w1() {
 
 // Stage 13
 function stage13w1() {
-
   let type = Math.floor(Math.random() * 3);
 
   let a = Math.floor(Math.random() * 5) + 2;
@@ -558,41 +848,42 @@ function stage13w1() {
   let question, correct, options;
 
   if (type === 0) {
-    // nilai pangkat
     let sup = toSuperscript(b);
-    question = `${a}${sup} = ?`;
+    question = `${a}${sup} = ... `;
     correct = Math.pow(a, b);
     options = generateOptionsNumber(correct);
   }
 
   else if (type === 1) {
-    // pangkat → perkalian
     let sup = toSuperscript(b);
     let mult = Array(b).fill(a).join(" × ");
     question = `${a}${sup} sama dengan ...`;
     correct = mult;
 
-    options = shuffle([
-      mult,
+    let wrongPool = [
       `${a} × ${b}`,
       `${b} × ${b} × ${b}`,
-      `${a} × ${a} × ${b} × ${b}`
-    ]);
+      `${a} × ${a} × ${b} × ${b}`,
+      `${a} × ${a} × ${a}`
+    ];
+
+    options = shuffle([correct, ...new Set(wrongPool.filter(opt => opt !== correct))]).slice(0, 4);
   }
 
   else {
-    // perkalian → pangkat
     let mult = Array(b).fill(a).join(" × ");
     let sup = toSuperscript(b);
     question = `${mult} dapat ditulis sebagai ...`;
     correct = `${a}${sup}`;
 
-    options = shuffle([
-      `${a}${sup}`,
+    let wrongPool = [
       `${b}${toSuperscript(a)}`,
-      `${a}${toSuperscript(b-1)}`,
-      `${a} × ${b}`
-    ]);
+      `${a}${toSuperscript(b - 1)}`,
+      `${a} × ${b}`,
+      `${a}${toSuperscript(b + 1)}`
+    ];
+
+    options = shuffle([correct, ...new Set(wrongPool.filter(opt => opt !== correct))]).slice(0, 4);
   }
 
   return createQuestion({
@@ -609,7 +900,6 @@ function stage13w1() {
 
 // Stage 14
 function stage14w1() {
-
   let type = Math.random() < 0.5 ? "kali" : "bagi";
 
   let a = Math.floor(Math.random() * 5) + 2;
@@ -619,10 +909,11 @@ function stage14w1() {
   let question, correct;
 
   if (type === "kali") {
-    question = `${a}${toSuperscript(m)} × ${a}${toSuperscript(n)} = ?`;
+    question = `${a}${toSuperscript(m)} × ${a}${toSuperscript(n)} = ... `;
     correct = Math.pow(a, m + n);
   } else {
-    question = `${a}${toSuperscript(m)} ÷ ${a}${toSuperscript(n)} = ?`;
+    if (n > m) [m, n] = [n, m];
+    question = `${a}${toSuperscript(m)} ÷ ${a}${toSuperscript(n)} = ... `;
     correct = Math.pow(a, m - n);
   }
 
@@ -640,11 +931,10 @@ function stage14w1() {
 
 // Stage 15
 function stage15w1() {
-
   let base = Math.floor(Math.random() * 15) + 2;
   let square = base * base;
 
-  let question = `${sqrtSymbol(square)} = ?`;
+  let question = `${sqrtSymbol(square)} = ... `;
   let correct = base;
 
   return createQuestion({
@@ -661,54 +951,58 @@ function stage15w1() {
 
 // Stage 16
 function stage16w1() {
-
   let type = Math.floor(Math.random() * 6);
 
-  let a = Math.floor(Math.random() * 8) + 2;
-  let b = Math.floor(Math.random() * 6) + 1;
+  let a = Math.floor(Math.random() * 8) + 2; // 2..9
+  let b = Math.floor(Math.random() * 6) + 2; // 2..7
+  let c = Math.floor(Math.random() * 4) + 1; // 1..4
+
+  let a2 = a * a;
+  let b2 = b * b;
+  let c2 = c * c;
 
   let question, correct;
 
-  // 1. √(a²)
+  // 1. a² + √(b²)
   if (type === 0) {
-    question = `√(${a}${toSuperscript(2)}) = ?`;
-    correct = a;
+    question = `${a}${toSuperscript(2)} + √(${b2}) = ... `;
+    correct = a2 + b;
   }
 
-  // 2. √(a² × b²)
+  // 2. a² - √(b²)
   else if (type === 1) {
-    question = `√(${a}${toSuperscript(2)} × ${b}${toSuperscript(2)}) = ?`;
-    correct = a * b;
+    question = `${a}${toSuperscript(2)} - √(${b2}) = ... `;
+    correct = a2 - b;
   }
 
-  // 3. √(a²) + b
+  // 3. √(a²) + b²
   else if (type === 2) {
-    question = `√(${a}${toSuperscript(2)}) + ${b} = ?`;
-    correct = a + b;
+    question = `√(${a2}) + ${b}${toSuperscript(2)} = ... `;
+    correct = a + b2;
   }
 
-  // 4. √(a²) − b
+  // 4. √(a²) × b²
   else if (type === 3) {
-    question = `√(${a}${toSuperscript(2)}) - ${b} = ?`;
-    correct = a - b;
+    question = `√(${a2}) × ${b}${toSuperscript(2)} = ... `;
+    correct = a * b2;
   }
 
-  // 5. a² + √(b²)
+  // 5. √(a² × b²) + c²  -> di dalam akar ditulis hasilnya
   else if (type === 4) {
-    question = `${a}${toSuperscript(2)} + √(${b}${toSuperscript(2)}) = ?`;
-    correct = (a * a) + b;
+    question = `√(${a2 * b2}) + ${c}${toSuperscript(2)} = ... `;
+    correct = (a * b) + c2;
   }
 
-  // 6. (√(a²))²
+  // 6. a² + √(b² × c²) -> di dalam akar ditulis hasilnya
   else {
-    question = `(√(${a}${toSuperscript(2)}))${toSuperscript(2)} = ?`;
-    correct = a * a;
+    question = `${a}${toSuperscript(2)} + √(${b2 * c2}) = ... `;
+    correct = a2 + (b * c);
   }
 
   return createQuestion({
     id: "stage16w1",
     stage: 16,
-    topic: "Campuran Pangkat & Akar",
+    topic: "Operasi Campuran Pangkat dan Akar",
     question,
     options: generateOptionsNumber(correct),
     correct,
@@ -717,11 +1011,44 @@ function stage16w1() {
   });
 }
 
+function bossStageW1() {
+  // Phase 1 — Bilangan Bulat
+  const phase1Pool = [stage4w1];
+  const phase1Func = phase1Pool[randInt(0, phase1Pool.length - 1)];
+  const phase1 = makeBossPhase(phase1Func(), "boss_p1", 35);
+  phase1.topic = "Phase 1 - Operasi Campuran Bilangan Bulat";
+
+  // Phase 2 — Pecahan & Desimal
+  const phase2Pool = [stage7w1, stage8w1];
+  const phase2Func = phase2Pool[randInt(0, phase2Pool.length - 1)];
+  const phase2 = makeBossPhase(phase2Func(), "boss_p2", 45);
+  phase2.topic = "Phase 2 - Pecahan dan Desimal";
+
+  // Phase 3 — FPB, KPK, Prima
+  const phase3Pool = [stage10w1, stage11w1, stage12w1];
+  const phase3Func = phase3Pool[randInt(0, phase3Pool.length - 1)];
+  const phase3 = makeBossPhase(phase3Func(), "boss_p3", 55);
+  phase3.topic = "Phase 3 - FPB, KPK, dan Bilangan Prima";
+
+  // Phase 4 — Pangkat & Akar
+  const phase4Pool = [stage14w1, stage15w1, stage16w1];
+  const phase4Func = phase4Pool[randInt(0, phase4Pool.length - 1)];
+  const phase4 = makeBossPhase(phase4Func(), "boss_p4", 70);
+  phase4.topic = "Phase 4 - Pangkat dan Akar";
+
+  return {
+    id: "bossW1",
+    stage: 17,
+    topic: "Akarion, Penjaga The Root Floor",
+    difficulty: "boss",
+    phases: [phase1, phase2, phase3, phase4]
+  };
+}
+
 // ===============================
 // ROUTER WORLD 1 (NUMBERS)
 // ===============================
-export function generateQuestionW1(stageNum){
-
+export function generateQuestionW1(stageNum) {
   const map = {
     1: stage1w1,
     2: stage2w1,
@@ -739,11 +1066,12 @@ export function generateQuestionW1(stageNum){
     14: stage14w1,
     15: stage15w1,
     16: stage16w1,
+    17: bossStageW1
   };
 
   const generator = map[stageNum];
 
-  if(!generator){
+  if (!generator) {
     console.error("Stage World 1 tidak ditemukan:", stageNum);
     return null;
   }

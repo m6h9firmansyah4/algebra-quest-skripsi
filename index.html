@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Algebra Quest</title>
 
   <!-- Tailwind CDN (DEV MODE) -->
@@ -14,6 +16,8 @@
 <body>
   <!-- ROOT CONTAINER (SPA) -->
   <div id="app" class="min-h-screen flex flex-col"></div>
+
+  <script src="./engine/disableZoom.js"></script>
 
   <!-- ========================= -->
   <!-- FIREBASE CONFIG -->
@@ -31,6 +35,7 @@
   <!-- ========================= -->
   <script type="module" src="./screens/map.js"></script>
   <script type="module" src="./screens/home.js"></script>
+  <script type="module" src="./screens/tutorial.js"></script>
   <script type="module" src="./screens/history.js"></script>
   <script type="module" src="./screens/achievement.js"></script>
   <script type="module" src="./screens/setting.js"></script>

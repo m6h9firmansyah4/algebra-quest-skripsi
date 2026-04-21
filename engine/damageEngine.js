@@ -1,11 +1,12 @@
-export function spawnDamage(type, damage, from="player"){
+export function spawnDamage(type, damage, from = "player") {
+  const container = document.getElementById("battleEffects");
+  if (!container) return;
 
   const el = document.createElement("div");
 
   el.className = "projectile shape-" + type;
   el.innerText = damage;
 
-  const container = document.getElementById("battleEffects");
   container.appendChild(el);
 
   const startX = from === "player" ? 80 : 300;
@@ -14,10 +15,10 @@ export function spawnDamage(type, damage, from="player"){
   el.style.left = startX + "px";
   el.style.top = "200px";
 
-  requestAnimationFrame(()=>{
-    el.style.transform = `translate(${endX-startX}px,0)`;
+  requestAnimationFrame(() => {
+    el.style.transform = `translate(${endX - startX}px,0)`;
     el.style.opacity = 0;
   });
 
-  setTimeout(()=>el.remove(),600);
+  setTimeout(() => el.remove(), 600);
 }

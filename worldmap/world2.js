@@ -24,17 +24,87 @@ function formatTerm(coef, variable, isFirst = false) {
   return coef < 0 ? ` - ${core}` : ` + ${core}`;
 }
 
-function generateOptionsText(correct, wrongList) {
-  let options = new Set();
-  options.add(correct);
+function buildAlgebraExpression(terms, constant = 0) {
+  let result = "";
+  let hasTerm = false;
 
-  while (options.size < 4) {
-    let rand = wrongList[Math.floor(Math.random() * wrongList.length)];
-    if (rand !== correct) options.add(rand);
+  for (const [coef, variable] of terms) {
+    if (coef === 0) continue;
+    result += formatTerm(coef, variable, !hasTerm);
+    hasTerm = true;
   }
 
-  return shuffle([...options]);
+  if (!hasTerm) {
+    return `${constant}`;
+  }
+
+  if (constant !== 0) {
+    result += formatConstant(constant);
+  }
+
+  return result.trim();
 }
+
+function formatConstantFirstEquation(coef, variable, constant) {
+  const absCoef = Math.abs(coef);
+  const core = absCoef === 1 ? `${variable}` : `${absCoef}${variable}`;
+
+  if (constant === 0) {
+    return formatTerm(coef, variable, true);
+  }
+
+  if (coef > 0) {
+    return `${constant} + ${core}`;
+  }
+
+  return `${constant} - ${core}`;
+}
+
+function formatInsideBracket(variable, constant) {
+  if (constant === 0) return variable;
+  return `${variable} ${constant >= 0 ? "+ " + constant : "- " + Math.abs(constant)}`;
+}
+
+function compareInequality(left, sign, right) {
+  if (sign === ">") return left > right;
+  if (sign === "<") return left < right;
+  if (sign === "≥") return left >= right;
+  if (sign === "≤") return left <= right;
+  return false;
+}
+
+function countIntegerSolutionsInRange(minVal, maxVal, checkFn) {
+  let count = 0;
+  for (let x = minVal; x <= maxVal; x++) {
+    if (checkFn(x)) count++;
+  }
+  return count;
+}
+
+function formatSet(arr) {
+  return `{${[...new Set(arr)].sort((a, b) => a - b).join(", ")}}`;
+}
+
+function formatLinearExpression(m, c, variable = "x") {
+  let first;
+
+  if (m === 1) first = `${variable}`;
+  else if (m === -1) first = `-${variable}`;
+  else first = `${m}${variable}`;
+
+  if (c === 0) return first;
+  return c > 0 ? `${first} + ${c}` : `${first} - ${Math.abs(c)}`;
+}
+
+function formatLinearEquation(m, c, variable = "x") {
+  return `y = ${formatLinearExpression(m, c, variable)}`;
+}
+
+function generateOptionsText(correct, wrongList) {
+  let pool = [...new Set((wrongList || []).filter(opt => opt !== correct && opt !== ""))];
+  return shuffle([correct, ...pool]).slice(0, 4);
+}
+
 
 // ---------- TEMPLATE ----------
 function createQuestion({
@@ -114,7 +184,7 @@ function stage2w2() {
     id: "stage2w2",
     stage: 2,
     topic: "Skala (Scaling Castle)",
-    question: `Pada sebuah ${context}, digunakan skala 1:${scale}. Jika jarak pada gambar adalah ${map} cm, maka jarak sebenarnya adalah ? cm`,
+    question: `Pada sebuah ${context}, digunakan skala 1:${scale}. Jika jarak pada gambar adalah ${map} cm, maka jarak sebenarnya adalah ... cm`,
     options: generateOptionsNumber(correct),
     correct,
     damage: 15,
@@ -166,7 +236,6 @@ function stage3w2() {
 // STAGE 4 – PENYEDERHANAAN ALJABAR VARIATIF
 // ===============================
 function stage4w2() {
-
   const vars = ["x", "y", "a", "b", "m", "n", "p", "q"];
 
   let v1 = vars[Math.floor(Math.random() * vars.length)];
@@ -195,28 +264,32 @@ function stage4w2() {
   let coefV1 = a + c;
   let coefV2 = b - d;
 
-  let correct =
-    formatTerm(coefV1, v1, true) +
-    formatTerm(coefV2, v2) +
-    formatConstant(e);
+  let correct = buildAlgebraExpression([
+    [coefV1, v1],
+    [coefV2, v2]
+  ], e);
 
-  let wrong1 = formatTerm(a + b + c + d, v1, true);
-  let wrong2 =
-    formatTerm(coefV1, v1, true) +
-    formatTerm(-coefV2, v2) +
-    formatConstant(e);
+  let wrongCandidates = [
+    buildAlgebraExpression([[a - c, v1], [b + d, v2]], e),
+    buildAlgebraExpression([[coefV1, v1], [-coefV2, v2]], e),
+    buildAlgebraExpression([[coefV1, v1], [coefV2, v2]], 0),
+    buildAlgebraExpression([[coefV1 + 1, v1], [coefV2, v2]], e)
+  ];
 
-  let wrong3 =
-    formatTerm(coefV1, v1, true) +
-    formatTerm(coefV2, v2);
+  let options = [correct, ...new Set(wrongCandidates.filter(opt => opt !== correct))];
 
-  let options = shuffle([correct, wrong1, wrong2, wrong3]);
+  while (options.length < 4) {
+    const extra = buildAlgebraExpression([[coefV1 + options.length, v1], [coefV2, v2]], e);
+    if (!options.includes(extra)) options.push(extra);
+  }
+
+  options = shuffle(options.slice(0, 4));
 
   return createQuestion({
     id: "stage4w2",
     stage: 4,
     topic: "Penyederhanaan Aljabar (Coconut King)",
-    question: `Sederhanakan bentuk berikut: ${expr}`,
+    question: `Sederhanakan bentuk berikut: <br> ${expr}`,
     options,
     correct,
     damage: 25,
@@ -229,37 +302,37 @@ function stage4w2() {
 // ===============================
 
 function stage5w2() {
-
   const vars = ["x","y","a","b","m","n","p","q"];
-  let v = vars[Math.floor(Math.random()*vars.length)];
+  let v = vars[Math.floor(Math.random() * vars.length)];
 
-  // solusi yang kita targetkan
-  let sol = Math.floor(Math.random()*10) + 1;
+  let sol = Math.floor(Math.random() * 10) + 1;
 
-  // koefisien a (hindari 0)
-  let a = Math.floor(Math.random()*7) - 3;
+  let a = Math.floor(Math.random() * 7) - 3;
   if (a === 0) a = 2;
 
-  // konstanta b
-  let b = Math.floor(Math.random()*11) - 5;
-
-  // bentuk kanan
+  let b = Math.floor(Math.random() * 11) - 5;
   let right = a * sol + b;
 
-  // variasi susunan
+  let leftStandard = buildAlgebraExpression([[a, v]], b);
+  let leftConstantFirst = formatConstantFirstEquation(a, v, b);
+  let isolatedTerm = formatTerm(a, v, true);
+  let rightIsolated = right - b;
+
   let forms = [
-    `${formatTerm(a, v, true)}${formatConstant(b)} = ${right}`,
-    `${formatConstant(b).trim()} ${formatTerm(a, v, true)} = ${right}`,
-    `${right} = ${formatTerm(a, v, true)}${formatConstant(b)}`
+    `${leftStandard} = ${right}`,
+    `${leftConstantFirst} = ${right}`,
+    `${right} = ${leftStandard}`,
+    `${isolatedTerm} = ${rightIsolated}`
   ];
 
-  let question = forms[Math.floor(Math.random()*forms.length)];
+  forms = [...new Set(forms)];
+  let question = forms[Math.floor(Math.random() * forms.length)];
 
   return createQuestion({
     id: "stage5w2",
     stage: 5,
     topic: "PLSV Dasar (Mummy of Equality)",
-    question: `Tentukan nilai ${v} dari persamaan: ${question}`,
+    question: `Tentukan nilai ${v} dari persamaan: <br> ${question}`,
     options: generateOptionsNumber(sol),
     correct: sol,
     damage: 25,
@@ -268,41 +341,34 @@ function stage5w2() {
 }
 
 function stage6w2() {
-
   const vars = ["x","y","a","b","m","n","p","q"];
-  let v = vars[Math.floor(Math.random()*vars.length)];
+  let v = vars[Math.floor(Math.random() * vars.length)];
 
-  let sol = Math.floor(Math.random()*10) + 1;
-
-  // pilih tipe bentuk
-  let type = Math.floor(Math.random()*2);
+  let sol = Math.floor(Math.random() * 10) + 1;
+  let type = Math.floor(Math.random() * 2);
 
   let question;
   let correct = sol;
 
   if (type === 0) {
-    // bentuk ax + b = c
-    let a = Math.floor(Math.random()*6) + 2;
-    let b = Math.floor(Math.random()*11) - 5;
-    let c = a*sol + b;
+    let a = Math.floor(Math.random() * 6) + 2;
+    let b = Math.floor(Math.random() * 11) - 5;
+    let c = a * sol + b;
 
-    question = `${formatTerm(a, v, true)}${formatConstant(b)} = ${c}`;
-
+    question = `${buildAlgebraExpression([[a, v]], b)} = ${c}`;
   } else {
-    // bentuk a(v + b) = c
-    let a = Math.floor(Math.random()*6) + 2;
-    let b = Math.floor(Math.random()*6) - 3;
-    let c = a*(sol + b);
+    let a = Math.floor(Math.random() * 6) + 2;
+    let b = Math.floor(Math.random() * 7) - 3;
+    let c = a * (sol + b);
 
-    let inside = `${v} ${b>=0?"+ "+b:"- "+Math.abs(b)}`;
-    question = `${a}(${inside}) = ${c}`;
+    question = `${a}(${formatInsideBracket(v, b)}) = ${c}`;
   }
 
   return createQuestion({
     id: "stage6w2",
     stage: 6,
     topic: "PLSV Lanjutan (Scorpion Solver)",
-    question: `Tentukan nilai ${v} dari persamaan: ${question}`,
+    question: `Tentukan nilai ${v} dari persamaan berikut:<br>${question}`,   
     options: generateOptionsNumber(correct),
     correct,
     damage: 30,
@@ -311,98 +377,141 @@ function stage6w2() {
 }
 
 function stage7w2() {
-
   const vars = ["x","y","a","b","m","n","p","q"];
-  let v = vars[Math.floor(Math.random()*vars.length)];
+  let v = vars[Math.floor(Math.random() * vars.length)];
 
-  let threshold = Math.floor(Math.random()*10) + 3;
+  const minRange = -10;
+  const maxRange = 10;
+  const signs = [">", "<", "≥", "≤"];
 
-  let signType = Math.random() < 0.5 ? ">" : "<";
+  for (let attempt = 0; attempt < 50; attempt++) {
+    let type = Math.floor(Math.random() * 3);
+    let sign = signs[Math.floor(Math.random() * signs.length)];
 
-  let isAskingTrue = Math.random() < 0.5; // memenuhi atau tidak memenuhi
+    let expr;
+    let correct;
 
-  // fungsi cek
-  function check(val) {
-    return signType === ">" ? val > threshold : val < threshold;
-  }
+    if (type === 0) {
+      // Bentuk: x > k, x ≤ k, dst.
+      let k = Math.floor(Math.random() * 17) - 8; // -8 s.d. 8
 
-  // generate satu himpunan
-  function generateSet(forceTrue) {
-    let set = new Set();
-    while (set.size < 5) {
-      let val = Math.floor(Math.random()*20) - 5;
-      if (check(val) === forceTrue) set.add(val);
+      expr = `${v} ${sign} ${k}`;
+      correct = countIntegerSolutionsInRange(minRange, maxRange, x =>
+        compareInequality(x, sign, k)
+      );
     }
-    return [...set];
+
+    else if (type === 1) {
+      // Bentuk: ax + b > c
+      let a = Math.floor(Math.random() * 4) + 2; // 2..5
+      let b = Math.floor(Math.random() * 11) - 5; // -5..5
+      let c = Math.floor(Math.random() * 21) - 10; // -10..10
+
+      expr = `${buildAlgebraExpression([[a, v]], b)} ${sign} ${c}`;
+      correct = countIntegerSolutionsInRange(minRange, maxRange, x =>
+        compareInequality(a * x + b, sign, c)
+      );
+    }
+
+    else {
+      // Bentuk: a(x + b) ≤ c
+      let a = Math.floor(Math.random() * 3) + 2; // 2..4
+      let b = Math.floor(Math.random() * 9) - 4; // -4..4
+      let c = Math.floor(Math.random() * 25) - 12; // -12..12
+
+      expr = `${a}(${formatInsideBracket(v, b)}) ${sign} ${c}`;
+      correct = countIntegerSolutionsInRange(minRange, maxRange, x =>
+        compareInequality(a * (x + b), sign, c)
+      );
+    }
+
+    // Hindari soal yang terlalu ekstrem: semua benar / semua salah
+    if (correct <= 0 || correct >= (maxRange - minRange + 1)) continue;
+
+    return createQuestion({
+      id: "stage7w2",
+      stage: 7,
+      topic: "Pertidaksamaan (Cactus Trap)",
+      question: `Perhatikan pertidaksamaan berikut:<br>${expr}<br>Pada himpunan bilangan bulat dari ${minRange} sampai ${maxRange}, banyak nilai ${v} yang memenuhi adalah ...`,
+      options: generateOptionsNumber(correct),
+      correct,
+      damage: 30,
+      difficulty: "medium"
+    });
   }
 
-  // satu benar
-  let correctSet = generateSet(isAskingTrue);
-
-  // tiga salah
-  let wrong1 = generateSet(!isAskingTrue);
-  let wrong2 = shuffle([...correctSet]).map(x=>x+1);
-  let wrong3 = shuffle([...correctSet]).map(x=>x-1);
-
-  let options = shuffle([
-    `{${correctSet.join(", ")}}`,
-    `{${wrong1.join(", ")}}`,
-    `{${wrong2.join(", ")}}`,
-    `{${wrong3.join(", ")}}`
-  ]);
-
-  let correct = `{${correctSet.join(", ")}}`;
-
+  // fallback aman
   return createQuestion({
     id: "stage7w2",
     stage: 7,
     topic: "Pertidaksamaan (Cactus Trap)",
-    question: `Pertidaksamaan ${v} ${signType} ${threshold}. Manakah himpunan nilai ${isAskingTrue ? "yang memenuhi" : "yang TIDAK memenuhi"}?`,
-    options,
-    correct,
+    question: `Perhatikan pertidaksamaan berikut:<br>x > 2<br>Pada himpunan bilangan bulat dari -10 sampai 10, banyak nilai x yang memenuhi adalah ...`,
+    options: generateOptionsNumber(8),
+    correct: 8,
     damage: 30,
     difficulty: "medium"
   });
 }
-function stage8w2() {
 
-  const contexts = [
-    "umur",
-    "harga buku dan pensil",
-    "jumlah kelereng",
-    "jumlah siswa",
-    "jumlah buah"
+function stage8w2() {
+  const sumContexts = [
+    ["apel", "jeruk"],
+    ["buku", "pensil"],
+    ["kelereng merah", "kelereng biru"],
+    ["siswa putra", "siswa putri"],
+    ["mangga", "pisang"]
   ];
 
-  let type = Math.floor(Math.random()*3); // jumlah / selisih / perbandingan
-  let context = contexts[Math.floor(Math.random()*contexts.length)];
+  const diffContexts = [
+    ["umur Ali", "umur Budi"],
+    ["tinggi Andi", "tinggi Beni"],
+    ["jumlah buku Rina", "jumlah buku Sinta"],
+    ["jumlah permen Tono", "jumlah permen Toni"]
+  ];
 
-  let sol = Math.floor(Math.random()*10) + 3; // nilai yang ditanya
+  const ratioContexts = [
+    ["buku", "pensil"],
+    ["kelereng merah", "kelereng biru"],
+    ["apel", "jeruk"],
+    ["siswa putra", "siswa putri"],
+    ["mangga", "pisang"]
+  ];
 
-  let question;
-  let correct = sol;
+  let type = Math.floor(Math.random() * 3);
+  let question, correct;
 
   if (type === 0) {
-    // jumlah
-    let other = Math.floor(Math.random()*10) + 2;
-    let total = sol + other;
+    let [itemA, itemB] = sumContexts[Math.floor(Math.random() * sumContexts.length)];
+    let other = Math.floor(Math.random() * 10) + 2;
+    let target = Math.floor(Math.random() * 10) + 3;
+    let total = target + other;
 
-    question = `Jumlah dua ${context} adalah ${total}. Salah satunya bernilai ${other}. Berapakah nilai yang lain?`;
+    correct = target;
+    question = `Jumlah ${itemA} dan ${itemB} adalah ${total}. Jika ${itemB} berjumlah ${other}, berapakah jumlah ${itemA}?`;
+  }
 
-  } else if (type === 1) {
-    // selisih
-    let diff = Math.floor(Math.random()*5) + 2;
-    let bigger = sol + diff;
+  else if (type === 1) {
+    let [itemBig, itemSmall] = diffContexts[Math.floor(Math.random() * diffContexts.length)];
+    let small = Math.floor(Math.random() * 10) + 3;
+    let diff = Math.floor(Math.random() * 5) + 2;
+    let big = small + diff;
 
-    question = `Selisih dua ${context} adalah ${diff}. Yang lebih besar bernilai ${bigger}. Berapakah nilai yang lebih kecil?`;
+    correct = small;
+    question = `Selisih ${itemBig} dan ${itemSmall} adalah ${diff}. Jika nilai yang lebih besar adalah ${big}, berapakah nilai yang lebih kecil?`;
+  }
 
-  } else {
-    // perbandingan
-    let ratioA = Math.floor(Math.random()*4) + 1;
-    let ratioB = Math.floor(Math.random()*4) + 1;
-    let total = (ratioA + ratioB) * sol;
+  else {
+    let [itemA, itemB] = ratioContexts[Math.floor(Math.random() * ratioContexts.length)];
+    let ratioA = Math.floor(Math.random() * 4) + 1;
+    let ratioB = Math.floor(Math.random() * 4) + 1;
+    let unit = Math.floor(Math.random() * 5) + 2;
 
-    question = `Perbandingan dua ${context} adalah ${ratioA}:${ratioB}. Jumlah keduanya ${total}. Berapakah nilai bagian pertama?`;
+    let partA = ratioA * unit;
+    let partB = ratioB * unit;
+    let total = partA + partB;
+
+    correct = partA;
+    question = `Perbandingan ${itemA} dan ${itemB} adalah ${ratioA}:${ratioB}. Jumlah keduanya ${total}. Berapakah banyak ${itemA}?`;
   }
 
   return createQuestion({
@@ -416,25 +525,23 @@ function stage8w2() {
     difficulty: "medium"
   });
 }
-
 // ===============================
 // ZONA 3 – SLOPE CANYON
 // ===============================
 
 function stage9w2() {
-
-  let size = Math.floor(Math.random()*2) + 3; // 3 atau 4 pasangan
+  let size = Math.floor(Math.random() * 2) + 3; // 3 atau 4 pasangan
 
   let pairs = [];
   let xSet = new Set();
   let ySet = new Set();
 
   while (pairs.length < size) {
-    let x = Math.floor(Math.random()*7)+1;
-    let y = Math.floor(Math.random()*7)+1;
+    let x = Math.floor(Math.random() * 7) + 1;
+    let y = Math.floor(Math.random() * 7) + 1;
 
-    if (!pairs.some(p => p[0]===x && p[1]===y)) {
-      pairs.push([x,y]);
+    if (!pairs.some(p => p[0] === x && p[1] === y)) {
+      pairs.push([x, y]);
       xSet.add(x);
       ySet.add(y);
     }
@@ -442,34 +549,48 @@ function stage9w2() {
 
   let askDomain = Math.random() < 0.5;
 
-  let correctSet = askDomain ? [...xSet] : [...ySet];
-  let correct = `{${correctSet.join(", ")}}`;
+  let correctArr = askDomain ? [...xSet] : [...ySet];
+  let oppositeArr = askDomain ? [...ySet] : [...xSet];
+  let sumArr = [...new Set(pairs.map(p => p[0] + p[1]))];
+  let subsetArr = correctArr.slice(0, Math.max(1, correctArr.length - 1));
 
-  let wrong1 = `{${[...ySet].join(", ")}}`;
-  let wrong2 = `{${pairs.map(p=>p[0]+p[1]).join(", ")}}`;
-  let wrong3 = `{${correctSet.slice(0,2).join(", ")}}`;
+  let correct = formatSet(correctArr);
 
-  let options = shuffle([correct, wrong1, wrong2, wrong3]);
+  let wrongCandidates = [
+    formatSet(oppositeArr),
+    formatSet(sumArr),
+    formatSet(subsetArr),
+    formatSet([...correctArr, Math.max(...correctArr) + 1])
+  ];
+
+  let options = [correct, ...new Set(wrongCandidates.filter(opt => opt !== correct))];
+
+  while (options.length < 4) {
+    let extraArr = [...correctArr];
+    extraArr[0] = extraArr[0] + options.length;
+    let extra = formatSet(extraArr);
+    if (!options.includes(extra)) options.push(extra);
+  }
+
+  options = shuffle(options.slice(0, 4));
 
   return createQuestion({
     id: "stage9w2",
     stage: 9,
     topic: "Relasi & Domain/Range (Lizard of Domain)",
-    question: `Diberikan relasi: ${pairs.map(p=>`(${p[0]},${p[1]})`).join(", ")}. Tentukan ${askDomain?"domain":"range"}.`,
+    question: `Diberikan relasi berikut:<br>${pairs.map(p => `(${p[0]},${p[1]})`).join(", ")}<br>Tentukan ${askDomain ? "domain" : "range"}.`,
     options,
     correct,
     damage: 30,
     difficulty: "medium"
   });
 }
-
 function stage10w2() {
+  let type = Math.floor(Math.random() * 3);
 
-  let type = Math.floor(Math.random()*3);
-
-  let a = Math.floor(Math.random()*5)+1;
-  let b = Math.floor(Math.random()*7)-3;
-  let input = Math.floor(Math.random()*6)+1;
+  let a = Math.floor(Math.random() * 5) + 1;
+  let b = Math.floor(Math.random() * 7) - 3;
+  let input = Math.floor(Math.random() * 6) + 1;
 
   let expr;
   let correct;
@@ -478,11 +599,11 @@ function stage10w2() {
     expr = `${a}x`;
     correct = a * input;
   } else if (type === 1) {
-    expr = `${a}x ${b>=0?"+ "+b:"- "+Math.abs(b)}`;
-    correct = a*input + b;
+    expr = buildAlgebraExpression([[a, "x"]], b);
+    correct = a * input + b;
   } else {
-    expr = `${b>=0?b+" + ":"- "+Math.abs(b)+" + "}${a}x`;
-    correct = a*input + b;
+    expr = formatConstantFirstEquation(a, "x", b);
+    correct = a * input + b;
   }
 
   return createQuestion({
@@ -498,39 +619,38 @@ function stage10w2() {
 }
 
 function stage11w2() {
-
-  let type = Math.floor(Math.random()*3);
-  let m = Math.floor(Math.random()*4)+1;
+  let type = Math.floor(Math.random() * 3);
+  let m = Math.floor(Math.random() * 4) + 1;
 
   let question;
 
   if (type === 0) {
     let x1 = 1;
-    let y1 = Math.floor(Math.random()*5)+1;
+    let y1 = Math.floor(Math.random() * 5) + 1;
     let x2 = x1 + 2;
-    let y2 = y1 + m*2;
+    let y2 = y1 + m * 2;
 
-    question = `Gradien garis melalui (${x1},${y1}) dan (${x2},${y2}) adalah?`;
-
-  } else if (type === 1) {
+    question = `Kemiringan garis melalui (${x1},${y1}) dan (${x2},${y2}) adalah ...`;
+  } 
+  else if (type === 1) {
     let x1 = 2;
-    let y1 = Math.floor(Math.random()*5)+1;
+    let y1 = Math.floor(Math.random() * 5) + 1;
     let x2 = x1 + 1;
     let y2 = y1 + m;
 
-    question = `Jika x berubah dari ${x1} ke ${x2} dan y dari ${y1} ke ${y2}, maka gradien garis adalah?`;
-
-  } else {
-    let x = Math.floor(Math.random()*5)+1;
+    question = `Jika x berubah dari ${x1} ke ${x2} dan y dari ${y1} ke ${y2}, maka kemiringan garis adalah ...`;
+  } 
+  else {
+    let x = Math.floor(Math.random() * 5) + 1;
     let y = m * x;
 
-    question = `Gradien garis yang melalui titik (0,0) dan (${x},${y}) adalah?`;
+    question = `Kemiringan garis yang melalui titik (0,0) dan (${x},${y}) adalah ...`;
   }
 
   return createQuestion({
     id: "stage11w2",
     stage: 11,
-    topic: "Gradien Garis (Gradient Goat)",
+    topic: "Kemiringan Garis (Slope Goat)",
     question,
     options: generateOptionsNumber(m),
     correct: m,
@@ -540,50 +660,55 @@ function stage11w2() {
 }
 
 function stage12w2() {
+  let type = Math.floor(Math.random() * 3);
 
-  let type = Math.floor(Math.random()*3);
-
-  let m = Math.floor(Math.random()*4)+1;
-  let c = Math.floor(Math.random()*6)-2;
+  let m = Math.floor(Math.random() * 4) + 1;
+  let c = Math.floor(Math.random() * 6) - 2;
 
   let correct;
   let question;
 
+  correct = formatLinearEquation(m, c);
+
   if (type === 0) {
-    // gradien + potong Y
-    correct = `y = ${m}x ${c>=0?"+ "+c:"- "+Math.abs(c)}`;
-    question = `Tentukan persamaan garis dengan gradien ${m} dan memotong sumbu Y di ${c}.`;
+    question = `Tentukan persamaan garis dengan kemiringan ${m} dan memotong sumbu Y di ${c}.`; 
+  } 
+  else if (type === 1) {
+    let x = Math.floor(Math.random() * 4) + 1;
+    let y = m * x + c;
 
-  } else if (type === 1) {
-    // gradien + satu titik
-    let x = Math.floor(Math.random()*4)+1;
-    let y = m*x + c;
-
-    correct = `y = ${m}x ${c>=0?"+ "+c:"- "+Math.abs(c)}`;
-    question = `Tentukan persamaan garis dengan gradien ${m} yang melalui titik (${x},${y}).`;
-
-  } else {
-    // dua titik
+    question = `Tentukan persamaan garis dengan kemiringan ${m} yang melalui titik (${x},${y}).`;
+  } 
+  else {
     let x1 = 1;
-    let y1 = m*x1 + c;
+    let y1 = m * x1 + c;
     let x2 = 3;
-    let y2 = m*x2 + c;
+    let y2 = m * x2 + c;
 
-    correct = `y = ${m}x ${c>=0?"+ "+c:"- "+Math.abs(c)}`;
     question = `Tentukan persamaan garis melalui titik (${x1},${y1}) dan (${x2},${y2}).`;
   }
 
-  let wrong1 = `y = ${c}x + ${m}`;
-  let wrong2 = `y = ${m}x ${c>=0?"+ "+(-c):"+ "+Math.abs(c)}`;
-  let wrong3 = `y = x + ${c}`;
+  let wrongCandidates = [
+    formatLinearEquation(c === 0 ? 2 : c, m),                 // tukar kemiringan dan konstanta
+    formatLinearEquation(m, c === 0 ? 1 : -c),                // balik tanda konstanta
+    formatLinearEquation(m + 1, c),                           // kemiringan salah
+    formatLinearEquation(Math.max(1, m - 1), c + 1)           // kombinasi salah lain
+  ];
 
-  let options = shuffle([correct, wrong1, wrong2, wrong3]);
+  let options = [correct, ...new Set(wrongCandidates.filter(opt => opt !== correct))];
+
+  while (options.length < 4) {
+    let extra = formatLinearEquation(m + options.length, c);
+    if (!options.includes(extra)) options.push(extra);
+  }
+
+  options = shuffle(options.slice(0, 4));
 
   return createQuestion({
     id: "stage12w2",
     stage: 12,
     topic: "Persamaan Garis Lurus (Rock Golem)",
-    question,
+    question, 
     options,
     correct,
     damage: 40,
@@ -596,22 +721,19 @@ function stage12w2() {
 // ===============================
 
 function stage13w2() {
-
   const vars = ["x","y","a","b","m","n","p","q"];
-  let v1 = vars[Math.floor(Math.random()*vars.length)];
-  let v2 = vars[Math.floor(Math.random()*vars.length)];
-  while (v2 === v1) v2 = vars[Math.floor(Math.random()*vars.length)];
+  let v1 = vars[Math.floor(Math.random() * vars.length)];
+  let v2 = vars[Math.floor(Math.random() * vars.length)];
+  while (v2 === v1) v2 = vars[Math.floor(Math.random() * vars.length)];
 
-  let sol1 = Math.floor(Math.random()*6)+1;
-  let sol2 = Math.floor(Math.random()*6)+1;
+  let sol1 = Math.floor(Math.random() * 6) + 1;
+  let sol2 = Math.floor(Math.random() * 6) + 1;
 
-  // bentuk persamaan 1
-  let a = Math.floor(Math.random()*3)+1;
-  let b = Math.floor(Math.random()*3)+1;
-  let c = a*sol1 + b*sol2;
+  let a = Math.floor(Math.random() * 3) + 1;
+  let b = Math.floor(Math.random() * 3) + 1;
+  let c = a * sol1 + b * sol2;
 
-  // bentuk persamaan 2 (substitusi)
-  let type = Math.floor(Math.random()*2);
+  let type = Math.floor(Math.random() * 2);
   let eq2, target, correct;
 
   if (type === 0) {
@@ -624,11 +746,16 @@ function stage13w2() {
     correct = sol2;
   }
 
+  let expr1 = buildAlgebraExpression([
+    [a, v1],
+    [b, v2]
+  ]);
+
   return createQuestion({
     id: "stage13w2",
     stage: 13,
     topic: "SPLDV Substitusi (Magma Slime)",
-    question: `Diketahui:\n${a}${v1} + ${b}${v2} = ${c}\n${eq2}\nTentukan nilai ${target}.`,
+    question: `Diketahui:<br>${expr1} = ${c}<br>${eq2}<br>Tentukan nilai ${target}.`,
     options: generateOptionsNumber(correct),
     correct,
     damage: 40,
@@ -637,31 +764,80 @@ function stage13w2() {
 }
 
 function stage14w2() {
-
   const vars = ["x","y","a","b","m","n","p","q"];
-  let v1 = vars[Math.floor(Math.random()*vars.length)];
-  let v2 = vars[Math.floor(Math.random()*vars.length)];
-  while (v2 === v1) v2 = vars[Math.floor(Math.random()*vars.length)];
+  let v1 = vars[Math.floor(Math.random() * vars.length)];
+  let v2 = vars[Math.floor(Math.random() * vars.length)];
+  while (v2 === v1) v2 = vars[Math.floor(Math.random() * vars.length)];
 
-  let sol1 = Math.floor(Math.random()*6)+1;
-  let sol2 = Math.floor(Math.random()*6)+1;
+  let mode = Math.floor(Math.random() * 2); // 0 = eliminasi umum, 1 = campuran jumlah-selisih
 
-  let a1 = Math.floor(Math.random()*3)+1;
-  let b1 = Math.floor(Math.random()*3)+1;
-  let a2 = Math.floor(Math.random()*3)+1;
-  let b2 = Math.floor(Math.random()*3)+1;
+  let ask, correct, question;
 
-  let c1 = a1*sol1 + b1*sol2;
-  let c2 = a2*sol1 + b2*sol2;
+  if (mode === 0) {
+    // =========================
+    // MODE 1: SPLDV ELIMINASI UMUM
+    // =========================
+    let sol1 = Math.floor(Math.random() * 6) + 1;
+    let sol2 = Math.floor(Math.random() * 6) + 1;
 
-  let ask = Math.random() < 0.5 ? v1 : v2;
-  let correct = ask === v1 ? sol1 : sol2;
+    let a1, b1, a2, b2;
+
+    do {
+      a1 = Math.floor(Math.random() * 3) + 1;
+      b1 = Math.floor(Math.random() * 3) + 1;
+      a2 = Math.floor(Math.random() * 3) + 1;
+      b2 = Math.floor(Math.random() * 3) + 1;
+    } while (a1 * b2 === a2 * b1); // hindari sistem sejenis
+
+    let c1 = a1 * sol1 + b1 * sol2;
+    let c2 = a2 * sol1 + b2 * sol2;
+
+    ask = Math.random() < 0.5 ? v1 : v2;
+    correct = ask === v1 ? sol1 : sol2;
+
+    let expr1 = buildAlgebraExpression([
+      [a1, v1],
+      [b1, v2]
+    ]);
+
+    let expr2 = buildAlgebraExpression([
+      [a2, v1],
+      [b2, v2]
+    ]);
+
+    question = `Selesaikan sistem berikut:<br>${expr1} = ${c1}<br>${expr2} = ${c2}<br>Nilai ${ask} adalah ...`;
+  }
+
+  else {
+    // =========================
+    // MODE 2: SPLDV CAMPURAN (JUMLAH-SELISIH)
+    // =========================
+    let sol1 = Math.floor(Math.random() * 6) + 1;
+    let sol2 = Math.floor(Math.random() * 6) + 1;
+
+    let eq1 = sol1 + sol2;
+    let eq2 = sol1 - sol2;
+
+    let type = Math.floor(Math.random() * 2);
+    let systemText;
+
+    if (type === 0) {
+      systemText = `${v1} + ${v2} = ${eq1}<br>${v1} - ${v2} = ${eq2}`;
+    } else {
+      systemText = `${v2} + ${v1} = ${eq1}<br>${v2} - ${v1} = ${-eq2}`;
+    }
+
+    ask = Math.random() < 0.5 ? v1 : v2;
+    correct = ask === v1 ? sol1 : sol2;
+
+    question = `Selesaikan sistem berikut:<br>${systemText}<br>Nilai ${ask} adalah ...`;
+  }
 
   return createQuestion({
     id: "stage14w2",
     stage: 14,
-    topic: "SPLDV Eliminasi (Ash Phantom)",
-    question: `Selesaikan sistem:\n${a1}${v1} + ${b1}${v2} = ${c1}\n${a2}${v1} + ${b2}${v2} = ${c2}\nNilai ${ask} adalah?`,
+    topic: "SPLDV Eliminasi & Campuran (Ash Phantom)",
+    question,
     options: generateOptionsNumber(correct),
     correct,
     damage: 40,
@@ -670,37 +846,95 @@ function stage14w2() {
 }
 
 function stage15w2() {
+  const vars = ["x", "y", "a", "b", "m", "n", "p", "q"];
+  let v1 = vars[Math.floor(Math.random() * vars.length)];
+  let v2 = vars[Math.floor(Math.random() * vars.length)];
+  while (v2 === v1) v2 = vars[Math.floor(Math.random() * vars.length)];
 
-  const vars = ["x","y","a","b","m","n","p","q"];
-  let v1 = vars[Math.floor(Math.random()*vars.length)];
-  let v2 = vars[Math.floor(Math.random()*vars.length)];
-  while (v2 === v1) v2 = vars[Math.floor(Math.random()*vars.length)];
+  let type = Math.floor(Math.random() * 3);
 
-  let sol1 = Math.floor(Math.random()*6)+1;
-  let sol2 = Math.floor(Math.random()*6)+1;
-
-  let eq1 = sol1 + sol2;
-  let eq2 = sol1 - sol2;
-
-  let type = Math.floor(Math.random()*2);
-
-  let question, ask, correct;
+  let question, correct, wrongCandidates;
 
   if (type === 0) {
-    question = `${v1} + ${v2} = ${eq1}\n${v1} - ${v2} = ${eq2}`;
-  } else {
-    question = `${v2} + ${v1} = ${eq1}\n${v2} - ${v1} = ${-eq2}`;
+    // jumlah & selisih
+    let sum = Math.floor(Math.random() * 10) + 10;
+    let diff = Math.floor(Math.random() * 5) + 2;
+
+    correct = `${v1} + ${v2} = ${sum}<br>${v1} - ${v2} = ${diff}`;
+
+    wrongCandidates = [
+      `${v1} + ${v2} = ${diff}<br>${v1} - ${v2} = ${sum}`,
+      `${v1} - ${v2} = ${sum}<br>${v1} + ${v2} = ${diff}`,
+      `2${v1} + ${v2} = ${sum}<br>${v1} - ${v2} = ${diff}`,
+      `${v1} + ${v2} = ${sum + 1}<br>${v1} - ${v2} = ${diff}`
+    ];
+
+    question = `Dua bilangan memiliki jumlah ${sum} dan selisih ${diff}. Jika bilangan pertama adalah ${v1} dan bilangan kedua adalah ${v2}, maka model matematikanya adalah ...`;
   }
 
-  ask = Math.random() < 0.5 ? v1 : v2;
-  correct = ask === v1 ? sol1 : sol2;
+  else if (type === 1) {
+    // harga barang
+    let c1 = Math.floor(Math.random() * 4) + 2;
+    let c2 = Math.floor(Math.random() * 4) + 1;
+    let d1 = Math.floor(Math.random() * 4) + 1;
+    let d2 = Math.floor(Math.random() * 4) + 2;
+
+    while (c1 === d1 && c2 === d2) {
+      d1 = Math.floor(Math.random() * 4) + 1;
+      d2 = Math.floor(Math.random() * 4) + 2;
+    }
+
+    let total1 = Math.floor(Math.random() * 20) + 20;
+    let total2 = Math.floor(Math.random() * 20) + 10;
+
+    while (total2 === total1) {
+      total2 = Math.floor(Math.random() * 20) + 10;
+    }
+
+    correct = `${buildAlgebraExpression([[c1, v1], [c2, v2]])} = ${total1}<br>${buildAlgebraExpression([[d1, v1], [d2, v2]])} = ${total2}`;
+
+    wrongCandidates = [
+      `${buildAlgebraExpression([[c1, v1], [c2, v2]])} = ${total2}<br>${buildAlgebraExpression([[d1, v1], [d2, v2]])} = ${total1}`,
+      `${buildAlgebraExpression([[c1, v1], [-c2, v2]])} = ${total1}<br>${buildAlgebraExpression([[d1, v1], [d2, v2]])} = ${total2}`,
+      `${buildAlgebraExpression([[c1, v1], [d2, v2]])} = ${total1}<br>${buildAlgebraExpression([[d1, v1], [c2, v2]])} = ${total2}`,
+      `${buildAlgebraExpression([[c1, v1], [c2, v2]])} = ${total1 + 1}<br>${buildAlgebraExpression([[d1, v1], [d2, v2]])} = ${total2}`
+    ];
+
+    question = `Harga ${c1} barang A dan ${c2} barang B adalah ${total1}, sedangkan harga ${d1} barang A dan ${d2} barang B adalah ${total2}. Jika harga barang A = ${v1} dan harga barang B = ${v2}, maka model matematikanya adalah ...`;
+  }
+
+  else {
+    // umur
+    let total = Math.floor(Math.random() * 15) + 20;
+    let diff = Math.floor(Math.random() * 6) + 2;
+
+    correct = `${v1} + ${v2} = ${total}<br>${v1} - ${v2} = ${diff}`;
+
+    wrongCandidates = [
+      `${v1} + ${v2} = ${diff}<br>${v1} - ${v2} = ${total}`,
+      `${v2} - ${v1} = ${diff}<br>${v1} + ${v2} = ${total}`,
+      `${v1} + ${v2} = ${total}<br>2${v1} - ${v2} = ${diff}`,
+      `${v1} + ${v2} = ${total + 1}<br>${v1} - ${v2} = ${diff}`
+    ];
+
+    question = `Jumlah umur dua orang adalah ${total} dan selisih umur mereka adalah ${diff}. Jika umur orang pertama = ${v1} dan umur orang kedua = ${v2}, maka model matematikanya adalah ...`;
+  }
+
+  let options = [correct, ...new Set(wrongCandidates.filter(opt => opt !== correct))];
+
+  while (options.length < 4) {
+    let extra = `${v1} + ${v2} = ${10 + options.length}<br>${v1} - ${v2} = ${2 + options.length}`;
+    if (!options.includes(extra)) options.push(extra);
+  }
+
+  options = shuffle(options.slice(0, 4));
 
   return createQuestion({
     id: "stage15w2",
     stage: 15,
-    topic: "SPLDV Campuran (Lava Elemental)",
-    question: `Diketahui sistem:\n${question}\nNilai ${ask} adalah?`,
-    options: generateOptionsNumber(correct),
+    topic: "Model Matematika SPLDV (Lava Elemental)",
+    question,
+    options,
     correct,
     damage: 45,
     difficulty: "very hard"
@@ -708,46 +942,47 @@ function stage15w2() {
 }
 
 function stage16w2() {
-
-  let type = Math.floor(Math.random()*3);
+  let type = Math.floor(Math.random() * 3);
 
   let correct, question;
 
   if (type === 0) {
     // harga barang
-    let pensil = Math.floor(Math.random()*5)+1;
-    let buku = Math.floor(Math.random()*5)+2;
+    let pensil = Math.floor(Math.random() * 5) + 1;
+    let buku = Math.floor(Math.random() * 5) + 2;
 
-    let eq1 = 2*pensil + buku;
+    let eq1 = 2 * pensil + buku;
     let eq2 = pensil + buku;
 
     correct = pensil;
 
-    question = `2 pensil dan 1 buku seharga ${eq1}. 1 pensil dan 1 buku seharga ${eq2}. Berapakah harga 1 pensil?`;
-
-  } else if (type === 1) {
+    question = `Diketahui:<br>2 pensil dan 1 buku seharga ${eq1}<br>1 pensil dan 1 buku seharga ${eq2}<br>Harga 1 pensil adalah ...`;
+  } 
+  else if (type === 1) {
     // kaki hewan
-    let ayam = Math.floor(Math.random()*5)+1;
-    let kambing = Math.floor(Math.random()*5)+1;
+    let ayam = Math.floor(Math.random() * 5) + 1;
+    let kambing = Math.floor(Math.random() * 5) + 1;
 
     let kepala = ayam + kambing;
-    let kaki = 2*ayam + 4*kambing;
+    let kaki = 2 * ayam + 4 * kambing;
 
     correct = ayam;
 
-    question = `Jumlah kepala hewan adalah ${kepala} dan jumlah kaki ${kaki}. Jika terdiri dari ayam dan kambing, berapa jumlah ayam?`;
-
-  } else {
+    question = `Diketahui:<br>Jumlah kepala hewan = ${kepala}<br>Jumlah kaki hewan = ${kaki}<br>Jika hewan terdiri dari ayam dan kambing, jumlah ayam adalah ...`;
+  } 
+  else {
     // umur
-    let a = Math.floor(Math.random()*10)+10;
-    let b = Math.floor(Math.random()*10)+5;
+    let older = Math.floor(Math.random() * 10) + 15;   // 15–24
+    let younger = Math.floor(Math.random() * 10) + 5;  // 5–14
 
-    let total = a + b;
-    let diff = a - b;
+    if (younger > older) [older, younger] = [younger, older];
 
-    correct = b;
+    let total = older + younger;
+    let diff = older - younger;
 
-    question = `Jumlah umur dua orang ${total} dan selisihnya ${diff}. Berapakah umur yang lebih muda?`;
+    correct = younger;
+
+    question = `Diketahui:<br>Jumlah umur dua orang = ${total}<br>Selisih umur mereka = ${diff}<br>Umur yang lebih muda adalah ...`;
   }
 
   return createQuestion({
@@ -767,39 +1002,49 @@ function stage16w2() {
 // ===============================
 
 function bossStageW2() {
-
   // =====================
-  // PHASE 1 — PLSV
+  // PHASE 1 — PLSV & PERTIDAKSAMAAN
   // =====================
-  const phase1Pool = [stage5w2, stage6w2, stage8w2];
-  let phase1Func = phase1Pool[Math.floor(Math.random()*phase1Pool.length)];
+  const phase1Pool = [stage6w2, stage7w2, stage8w2];
+  let phase1Func = phase1Pool[Math.floor(Math.random() * phase1Pool.length)];
   let phase1 = phase1Func();
   phase1.id = "boss_p1";
   phase1.stage = 17;
-  phase1.damage = 50;
+  phase1.damage = 45;
   phase1.difficulty = "boss";
 
   // =====================
-  // PHASE 2 — FUNCTION & SLOPE
+  // PHASE 2 — RELASI & FUNGSI
   // =====================
-  const phase2Pool = [stage10w2, stage11w2, stage12w2];
-  let phase2Func = phase2Pool[Math.floor(Math.random()*phase2Pool.length)];
+  const phase2Pool = [stage9w2, stage10w2];
+  let phase2Func = phase2Pool[Math.floor(Math.random() * phase2Pool.length)];
   let phase2 = phase2Func();
   phase2.id = "boss_p2";
   phase2.stage = 17;
-  phase2.damage = 55;
+  phase2.damage = 50;
   phase2.difficulty = "boss";
 
   // =====================
-  // PHASE 3 — SPLDV
+  // PHASE 3 — KEMIRINGAN & PERSAMAAN GARIS
   // =====================
-  const phase3Pool = [stage13w2, stage14w2, stage15w2, stage16w2];
-  let phase3Func = phase3Pool[Math.floor(Math.random()*phase3Pool.length)];
+  const phase3Pool = [stage11w2, stage12w2];
+  let phase3Func = phase3Pool[Math.floor(Math.random() * phase3Pool.length)];
   let phase3 = phase3Func();
   phase3.id = "boss_p3";
   phase3.stage = 17;
-  phase3.damage = 60;
+  phase3.damage = 55;
   phase3.difficulty = "boss";
+
+  // =====================
+  // PHASE 4 — SPLDV
+  // =====================
+  const phase4Pool = [stage13w2, stage14w2, stage15w2, stage16w2];
+  let phase4Func = phase4Pool[Math.floor(Math.random() * phase4Pool.length)];
+  let phase4 = phase4Func();
+  phase4.id = "boss_p4";
+  phase4.stage = 17;
+  phase4.damage = 65;
+  phase4.difficulty = "boss";
 
   // =====================
   // FINAL OBJECT
@@ -809,7 +1054,7 @@ function bossStageW2() {
     stage: 17,
     topic: "Solarius the Equinox",
     difficulty: "boss",
-    phases: [phase1, phase2, phase3]
+    phases: [phase1, phase2, phase3, phase4]
   };
 }
 
