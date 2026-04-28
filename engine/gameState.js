@@ -7,7 +7,12 @@ export const defaultPlayerStats = {
   maxHp: 100,
   attack: 10,
   defense: 5,
-  gold: 0
+
+  // LIFEPOINT SYSTEM
+  lifePoints: 5,
+  maxLifePoints: 5,
+  lifePointRegenMs: 3 * 60 * 60 * 1000,
+  nextLifeAt: null
 };
 
 export const gameState = {
@@ -35,9 +40,6 @@ export const gameState = {
   },
 
   player: { ...defaultPlayerStats },
-  skills: [
-  { name: "Basic Attack", power: 1 }
-  ],
 
   achievements: [
     { name: "Pemula", bonus: 0 },
@@ -46,22 +48,6 @@ export const gameState = {
   ],
 
   title: "Pemula",
-
-  inventory: {
-      items: {
-        potion: 0,
-        megaPotion: 0
-      },
-      skills: {
-        fireSkill: 0
-      }
-    },
-
-  status: {
-    freezeEnemy: 0,
-    buffAttack: 0,
-    breakDefense: 0
-  },
   
   enemy: null,
   currentQuestion: null,

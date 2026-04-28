@@ -8,7 +8,7 @@
 // ======================================================
 import { auth, provider, db } from "./firebase-config.js";
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { gameState, defaultPlayerStats } from "./engine/gameState.js";
 import "./screens/profile.js";
 import "./engine/guideSystem.js";
@@ -18,7 +18,46 @@ import "./engine/guideSystem.js";
 // 2. GLOBAL BINDING
 // ======================================================
 window.gameState = gameState;
+const defaultProgress = {
+  numbers: {
+    done: 0,
+    total: 17,
+    completedStage: 0,
+    highestUnlockedStage: 1
+  },
 
+  algebra: {
+    done: 0,
+    total: 17,
+    completedStage: 0,
+    highestUnlockedStage: 0
+  },
+
+  geometry: {
+    done: 0,
+    total: 17,
+    completedStage: 0,
+    highestUnlockedStage: 0
+  },
+
+  data: {
+    done: 0,
+    total: 17,
+    completedStage: 0,
+    highestUnlockedStage: 0
+  }
+};
+
+function cloneDefaultProgress() {
+  return JSON.parse(JSON.stringify(defaultProgress));
+}
+
+const defaultSettings = {
+  sound: true,
+  music: true,
+  theme: "default",
+  musicTrack: "default"
+};
 
 // ======================================================
 // 3. AUDIO ENGINE
@@ -144,11 +183,90 @@ function safeLoadUserData(dbStats) {
   return {
     ...defaultPlayerStats,
     ...dbStats,
-    hp: dbStats.hp || 100,
-    maxHp: dbStats.maxHp || 100,
-    attack: dbStats.attack || 10,
-    defense: dbStats.defense || 5
+
+    hp: dbStats.hp ?? defaultPlayerStats.hp,
+    maxHp: dbStats.maxHp ?? defaultPlayerStats.maxHp,
+    attack: dbStats.attack ?? defaultPlayerStats.attack,
+    defense: dbStats.defense ?? defaultPlayerStats.defense,
+    exp: dbStats.exp ?? defaultPlayerStats.exp,
+    expToNext: dbStats.expToNext ?? defaultPlayerStats.expToNext,
+    level: dbStats.level ?? defaultPlayerStats.level,
+
+    // LifePoints fallback
+    lifePoints: dbStats.lifePoints ?? 5,
+    maxLifePoints: dbStats.maxLifePoints ?? 5,
+    lifePointRegenMs: dbStats.lifePointRegenMs ?? (3 * 60 * 60 * 1000),
+    nextLifeAt: dbStats.nextLifeAt ?? null
   };
+}
+
+function safeLoadProgress(dbProgress) {
+  const progress = {
+    numbers: {
+      ...defaultProgress.numbers,
+      ...(dbProgress?.numbers || {})
+    },
+
+    algebra: {
+      ...defaultProgress.algebra,
+      ...(dbProgress?.algebra || {})
+    },
+
+    geometry: {
+      ...defaultProgress.geometry,
+      ...(dbProgress?.geometry || {})
+    },
+
+    data: {
+      ...defaultProgress.data,
+      ...(dbProgress?.data || {})
+    }
+  };
+
+  // Kompatibilitas data lama
+  Object.keys(progress).forEach(world => {
+    const p = progress[world];
+
+    if (p.completedStage === undefined) {
+      p.completedStage = p.done || 0;
+    }
+
+    if (p.highestUnlockedStage === undefined) {
+      if (world === "numbers") {
+        p.highestUnlockedStage = Math.max(1, p.completedStage + 1);
+      } else {
+        p.highestUnlockedStage = 0;
+      }
+    }
+
+    p.done = p.completedStage;
+    p.total = 17;
+  });
+
+  // Algebrum terbuka ketika Prime Verba sudah mencapai stage 8
+  if (progress.numbers.highestUnlockedStage >= 8) {
+    progress.algebra.highestUnlockedStage = Math.max(
+      progress.algebra.highestUnlockedStage,
+      1
+    );
+  }
+
+  return progress;
+}
+
+function safeLoadSettings(dbSettings) {
+  return {
+    ...defaultSettings,
+    ...(dbSettings || {})
+  };
+}
+
+function applyLoadedUserData(data, user) {
+  window.gameState.currentUser = data?.username || user.displayName;
+  window.gameState.player = safeLoadUserData(data?.stats);
+  window.gameState.progress = safeLoadProgress(data?.progress);
+  window.gameState.settings = safeLoadSettings(data?.settings);
+  window.gameState.title = data?.title || "Pemula";
 }
 
 // ======================================================
@@ -167,11 +285,23 @@ window.handleLogin = async function() {
 
     if (docSnap.exists()) {
       const data = docSnap.data();
-      window.gameState.player = safeLoadUserData(data?.stats || {});
-      window.gameState.currentUser = data.username || user.displayName;
+      applyLoadedUserData(data, user);
     } else {
       window.gameState.currentUser = user.displayName;
-      window.gameState.player.name = user.displayName;
+      window.gameState.player = {
+        ...defaultPlayerStats,
+        name: user.displayName,
+        lifePoints: 5,
+        maxLifePoints: 5,
+        lifePointRegenMs: 3 * 60 * 60 * 1000,
+        nextLifeAt: null
+      };
+
+      window.gameState.progress = cloneDefaultProgress();
+      window.gameState.settings = { ...defaultSettings };
+      window.gameState.title = "Pemula";
+
+      await window.saveProgress(window.gameState);
     }
 
     window.gameState.screen = 'home';
@@ -204,18 +334,42 @@ window.saveProgress = async function(gs) {
   }
 
   try {
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    await setDoc(userRef, {
-      username: gs.currentUser,
-      stats: gs.player,
-      lastSaved: new Date()
-    }, { merge: true });
+    // Update LifePoints sebelum data disimpan
+    if (window.updateLifePoints) {
+      window.updateLifePoints(gs);
+    }
 
-    window.gameState.feedback = "💾 Progress berhasil disimpan!";
+    const userRef = doc(db, "users", auth.currentUser.uid);
+
+    const saveData = {
+      username: gs.currentUser || auth.currentUser.displayName,
+      email: auth.currentUser.email,
+
+      stats: {
+        ...gs.player
+      },
+
+      progress: {
+        ...gs.progress
+      },
+
+      settings: {
+        ...gs.settings
+      },
+
+      title: gs.title || "Pemula",
+
+      lastSaved: serverTimestamp()
+    };
+
+    await setDoc(userRef, saveData, { merge: true });
+
+    gs.feedback = "💾 Progress berhasil disimpan!";
     window.render();
+
   } catch (e) {
     console.error("Gagal save:", e);
-    window.gameState.feedback = "❌ Gagal menyimpan progress";
+    gs.feedback = "❌ Gagal menyimpan progress";
     window.render();
   }
 };
@@ -225,33 +379,48 @@ window.resetProgress = async function() {
 
   const gs = window.gameState;
 
-  // reset local
-  gs.player = {
-    ...defaultPlayerStats
+  const resetPlayer = {
+    ...defaultPlayerStats,
+    name: gs.currentUser || auth.currentUser?.displayName || "Hero",
+
+    // Pastikan LifePoints kembali penuh
+    lifePoints: 5,
+    maxLifePoints: 5,
+    lifePointRegenMs: 3 * 60 * 60 * 1000,
+    nextLifeAt: null
   };
 
-  gs.progress = {
-    numbers: { done: 0 },
-    algebra: { done: 0 },
-    geometry: { done: 0 }
-  };
+  gs.player = resetPlayer;
+  gs.progress = cloneDefaultProgress();
+  gs.settings = { ...defaultSettings };
+  gs.title = "Pemula";
+
+  gs.enemy = null;
+  gs.currentQuestion = null;
+  gs.userAnswer = "";
+  gs.feedback = "";
   gs.battleLog = [];
+  gs.screen = "home";
 
-  // 🔥 reset ke Firebase juga
   if (auth.currentUser) {
     try {
       const userRef = doc(db, "users", auth.currentUser.uid);
 
       await setDoc(userRef, {
-        username: gs.currentUser,
+        username: gs.currentUser || auth.currentUser.displayName,
+        email: auth.currentUser.email,
         stats: gs.player,
-        lastSaved: new Date()
+        progress: gs.progress,
+        settings: gs.settings,
+        title: gs.title,
+        lastReset: serverTimestamp(),
+        lastSaved: serverTimestamp()
       }, { merge: true });
 
-      gs.feedback = "✅ Progress berhasil direset & disimpan!";
+      gs.feedback = "✅ Progress berhasil direset dan disimpan!";
     } catch (e) {
-      console.error(e);
-      gs.feedback = "❌ Reset gagal disimpan ke server!";
+      console.error("Reset gagal:", e);
+      gs.feedback = "❌ Reset gagal disimpan ke Firebase!";
     }
   }
 
@@ -427,10 +596,25 @@ onAuthStateChanged(auth, async (user) => {
 
     if (docSnap.exists()) {
       const data = docSnap.data();
-      window.gameState.player = safeLoadUserData(data.stats);
+      applyLoadedUserData(data, user);
+    } else {
+      window.gameState.currentUser = user.displayName;
+      window.gameState.player = {
+        ...defaultPlayerStats,
+        name: user.displayName,
+        lifePoints: 5,
+        maxLifePoints: 5,
+        lifePointRegenMs: 3 * 60 * 60 * 1000,
+        nextLifeAt: null
+      };
+
+      window.gameState.progress = cloneDefaultProgress();
+      window.gameState.settings = { ...defaultSettings };
+      window.gameState.title = "Pemula";
+
+      await window.saveProgress(window.gameState);
     }
 
-    window.gameState.currentUser = user.displayName;
     window.gameState.screen = 'home';
   } else {
     window.gameState.screen = 'welcome';

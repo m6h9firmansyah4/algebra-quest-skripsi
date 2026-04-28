@@ -1,7 +1,21 @@
-
-
 window.renderHomeScreen = function () {
   const gs = window.gameState;
+
+    // Update LifePoints jika function-nya tersedia dari game.js
+  if (window.updateLifePoints) {
+    window.updateLifePoints(gs);
+  }
+
+  // Fallback agar UI tidak error kalau data lama belum punya LifePoints
+  const lifePoints = gs.player.lifePoints ?? 5;
+  const maxLifePoints = gs.player.maxLifePoints ?? 5;
+  const lifePercent = (lifePoints / maxLifePoints) * 100;
+
+  const lifeTimerText = window.getLifePointTimerText
+    ? window.getLifePointTimerText(gs)
+    : lifePoints >= maxLifePoints
+      ? "Penuh"
+      : "Memulihkan...";
 
   return `
 
@@ -30,10 +44,6 @@ window.renderHomeScreen = function () {
             ${gs.player.name}
           </h2>
 
-          <p class="text-sm text-gray-300">
-            ❤️ ${gs.player.hp} / ${gs.player.maxHp}
-          </p>
-
           <p class="text-sm text-gray-400">
             Lv.${gs.player.level}
           </p>
@@ -41,15 +51,39 @@ window.renderHomeScreen = function () {
 
         <!-- KANAN -->
         <div class="text-right text-sm">
-          💰 ${gs.player.gold} Gold <br>
           ⭐ ${gs.player.exp}/${gs.player.expToNext}
         </div>
 
       </div>
 
-      <!-- HP BAR -->
-      <div class="hp-bar mt-3">
-        <div class="hp-fill" style="width:${(gs.player.hp/gs.player.maxHp)*100}%"></div>
+      <!-- LIFEPOINTS -->
+      <div id="lifePointsCard" class="mt-4 p-3 rounded-xl bg-slate-900/60 border border-red-400/30">
+
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-sm font-bold text-red-300">
+            ❤️ LifePoints
+          </div>
+
+          <div class="text-sm font-bold text-red-400">
+            ${lifePoints}/${maxLifePoints}
+          </div>
+        </div>
+
+        <div class="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
+          <div 
+            class="h-full bg-red-500 rounded-full transition-all duration-500"
+            style="width:${lifePercent}%">
+          </div>
+        </div>
+
+        <div class="text-xs text-gray-400 mt-2 text-center">
+          ${
+            lifePoints >= maxLifePoints
+              ? "LifePoints penuh"
+              : `LifePoint berikutnya: ${lifeTimerText}`
+          }
+        </div>
+
       </div>
 
     </div>

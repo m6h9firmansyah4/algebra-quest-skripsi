@@ -1369,3 +1369,22 @@ html, body {
     font-size: 11px;
   }
 }
+
+.locked-node {
+  opacity: 0.45;
+  filter: grayscale(1);
+  cursor: not-allowed;
+  background: #334155 !important;
+  border: 2px solid #64748b !important;
+  color: #cbd5e1 !important;
+}
+
+.locked-world {
+  opacity: 0.55;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
+
+.locked-world:hover {
+  transform: none !important;
+}

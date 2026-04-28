@@ -34,12 +34,15 @@ export function calculatePlayerDamage(gs) {
 
 // Damage dari enemy ke player
 export function calculateEnemyDamage(gs) {
+  // Jika musuh sudah punya damage hasil balancing, pakai itu
+  if (gs.enemy.realDamageToPlayer) {
+    return gs.enemy.realDamageToPlayer;
+  }
+
   let baseDamage = gs.enemy.attack;
 
-  // 🔥 BONUS: Defense system
   baseDamage -= gs.player.defense || 0;
 
-  // minimal damage biar tidak 0
   return Math.max(3, baseDamage);
 }
 

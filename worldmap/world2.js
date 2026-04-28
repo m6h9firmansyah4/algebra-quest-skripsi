@@ -105,6 +105,20 @@ function generateOptionsText(correct, wrongList) {
   return shuffle([correct, ...pool]).slice(0, 4);
 }
 
+function makeBossPhaseW2(questionObj, phaseId, damage) {
+  const originalStage = questionObj.stage;
+
+  return {
+    ...questionObj,
+    id: phaseId,
+    sourceStage: originalStage,
+    timerStage: originalStage,
+    stage: 17,
+    damage,
+    difficulty: "boss"
+  };
+}
+
 
 // ---------- TEMPLATE ----------
 function createQuestion({
@@ -1007,11 +1021,7 @@ function bossStageW2() {
   // =====================
   const phase1Pool = [stage6w2, stage7w2, stage8w2];
   let phase1Func = phase1Pool[Math.floor(Math.random() * phase1Pool.length)];
-  let phase1 = phase1Func();
-  phase1.id = "boss_p1";
-  phase1.stage = 17;
-  phase1.damage = 45;
-  phase1.difficulty = "boss";
+  let phase1 = makeBossPhaseW2(phase1Func(), "boss_p1", 45);
 
   // =====================
   // PHASE 2 — RELASI & FUNGSI

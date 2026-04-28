@@ -20,11 +20,11 @@ window.renderMapScreen = function () {
 
   return `
   <h2 id="mapTitle" class="text-center text-xl font-bold text-yellow-400 mt-3">
-    🌍 Pilih Dunia Petualangan
+    🌍 Pilih Area Petualangan
   </h2>
 
   <p id="mapSubtitle" class="text-center text-sm text-gray-400 mb-2">
-    Geser ke kiri/kanan untuk memilih dunia
+    Geser ke kiri/kanan untuk memilih area
   </p>
 
   <div id="mapWrapper" class="map-wrapper">
@@ -34,10 +34,10 @@ window.renderMapScreen = function () {
     </div>
 
     <div id="worldScroll" class="world-scroll">
-      ${renderWorldCard("numbers", "🌳 Dunia Bilangan", "assets/map/ikon_island_numbers.png")}
-      ${renderWorldCard("algebra", "⚖️ Dunia Aljabar", "assets/map/island_algebra.png")}
-      ${renderWorldCard("geometry", "📐 Dunia Geometri", "assets/map/island_geometry.png")}
-      ${renderWorldCard("data", "📊 Dunia Data & Peluang", "assets/map/island_data.png")}
+      ${renderWorldCard("numbers", "🌳 Prime Verba", "assets/map/ikon_island_numbers.png")}
+      ${renderWorldCard("algebra", "⚖️ Algebrum", "assets/map/island_algebra.png")}
+      ${renderWorldCard("geometry", "📐 Geometria", "assets/map/island_geometry.png")}
+      ${renderWorldCard("data", "📊 Statica", "assets/map/island_data.png")}
     </div>
 
   </div>
@@ -45,16 +45,36 @@ window.renderMapScreen = function () {
 };
 
 function renderWorldCard(id, title, img) {
-  const isActive = (id === "numbers" || id === "algebra");
+  if (window.ensureStageProgress) {
+    window.ensureStageProgress(window.gameState);
+  }
 
-  const prog = window.gameState.progress[id];
-  const percent = prog ? Math.floor((prog.done / prog.total) * 100) : 0;
+  const gs = window.gameState;
+
+  const isActive = window.isWorldUnlocked
+    ? window.isWorldUnlocked(gs, id)
+    : id === "numbers";
+
+  const prog = gs.progress?.[id] || {
+    done: 0,
+    total: 17,
+    completedStage: 0,
+    highestUnlockedStage: id === "numbers" ? 1 : 0
+  };
+
+  const percent = prog.total
+    ? Math.floor((prog.done / prog.total) * 100)
+    : 0;
+
+  const lockedText = getWorldLockedText(id);
 
   return `
     <div 
       id="worldCard-${id}"
       class="world-card ${!isActive ? 'locked-world' : ''}"
-      ${isActive ? `onclick="openIsland('${id}')"` : ""}
+      ${isActive 
+        ? `onclick="openIsland('${id}')"` 
+        : `onclick="showLockedWorldMessage('${id}')"`}
     >
 
       <img src="${img}" class="world-img">
@@ -67,12 +87,12 @@ function renderWorldCard(id, title, img) {
             <div class="progress-fill" style="width:${percent}%"></div>
           </div>
           <div class="progress-text">
-            ${prog.done} / ${prog.total} materi
+            ${prog.done} / ${prog.total} stage
           </div>
         </div>
       ` : `
         <div id="comingSoon-${id}" class="coming-soon-badge">
-          🚧 Coming Soon
+          ${lockedText}
         </div>
       `}
 
@@ -80,6 +100,21 @@ function renderWorldCard(id, title, img) {
   `;
 }
 
+function getWorldLockedText(id) {
+  if (id === "algebra") {
+    return "🔒 Terbuka setelah Prime Verba mencapai Stage 8";
+  }
+
+  if (id === "geometry") {
+    return "🚧 Coming Soon";
+  }
+
+  if (id === "data") {
+    return "🚧 Coming Soon";
+  }
+
+  return "🔒 Terkunci";
+}
 
 function renderIslandView(worldId) {
   let islandImg = "";
@@ -88,7 +123,7 @@ function renderIslandView(worldId) {
 
   if (worldId === "numbers") {
     islandImg = "assets/map/island_numbers.png";
-    zoneTitle = "🌿 Prime Verda";
+    zoneTitle = "🌿 Prime Verba";
     zoneSubtitle = "Bilangan";
   }
 
@@ -148,9 +183,39 @@ return `
 }
 
 
-window.openIsland = function(worldId){
+window.openIsland = function(worldId) {
+  if (window.ensureStageProgress) {
+    window.ensureStageProgress(window.gameState);
+  }
+
+  if (window.isWorldUnlocked && !window.isWorldUnlocked(window.gameState, worldId)) {
+    showLockedWorldMessage(worldId);
+    return;
+  }
+
   currentIslandView = worldId;
+  window.gameState.selectedWorld = worldId;
+
   window.render();
+};
+
+window.showLockedWorldMessage = function(worldId) {
+  if (worldId === "algebra") {
+    alert("Algebrum masih terkunci. Selesaikan Prime Verba hingga mencapai Stage 8 terlebih dahulu.");
+    return;
+  }
+
+  if (worldId === "geometry") {
+    alert("Geometria belum tersedia. Area ini masih dalam pengembangan.");
+    return;
+  }
+
+  if (worldId === "data") {
+    alert("Statica belum tersedia. Area ini masih dalam pengembangan.");
+    return;
+  }
+
+  alert("Area ini masih terkunci.");
 };
 
 window.closeIsland = function(){
@@ -323,8 +388,17 @@ function getNodeFontSize(level, isBoss) {
   return 14 * NODE_VISUAL_SCALE;
 }
 
+function getNodeType(level, isBoss) {
+  if (isBoss) return "boss-node";
+  if (level % 4 === 0) return "mini-node";
+  return "normal-node";
+}
+
 function renderNode(level, top, left, isBoss = false, worldId) {
-  const unlocked = true;
+  const unlocked = window.isStageUnlocked
+    ? window.isStageUnlocked(window.gameState, worldId, level)
+    : (worldId === "numbers" && level === 1);
+
   const typeClass = getNodeType(level, isBoss);
 
   const size = getNodeSize(level, isBoss);
@@ -341,24 +415,68 @@ function renderNode(level, top, left, isBoss = false, worldId) {
         height:${size}px;
         font-size:${fontSize}px;
       "
-      onclick="startBattle('${worldId}','default', ${level})"
+      ${unlocked 
+        ? `onclick="startBattle('${worldId}','default', ${level})"` 
+        : `onclick="showLockedStageMessage('${worldId}', ${level})"` 
+      }
     >
-      ${isBoss ? "👑" : level}
+      ${unlocked ? (isBoss ? "👑" : level) : "🔒"}
     </div>
   `;
 }
 
-function getNodeType(level, isBoss){
-  if(isBoss) return "boss-node";
-  if(level % 4 === 0) return "mini-node";
-  return "normal-node";
-}
-
-function renderNodes(nodes, worldId){
+function renderNodes(nodes, worldId) {
   return nodes.map(n => 
     renderNode(n.level, n.y, n.x, n.boss, worldId)
   ).join("");
 }
+
+window.showLockedStageMessage = function(worldId, level) {
+  if (worldId === "algebra") {
+    alert("Stage ini masih terkunci. Selesaikan stage sebelumnya di Algebrum terlebih dahulu.");
+    return;
+  }
+
+  if (worldId === "numbers") {
+    alert("Stage ini masih terkunci. Selesaikan stage sebelumnya di Prime Verba terlebih dahulu.");
+    return;
+  }
+
+  alert("Stage ini masih terkunci.");
+};
+
+window.showLockedStageMessage = function(worldId, level) {
+  if (worldId === "algebra") {
+    alert("Stage ini masih terkunci. Selesaikan stage sebelumnya di Algebrum terlebih dahulu.");
+    return;
+  }
+
+  if (worldId === "numbers") {
+    alert("Stage ini masih terkunci. Selesaikan stage sebelumnya di Prime Verba terlebih dahulu.");
+    return;
+  }
+
+  alert("Stage ini masih terkunci.");
+};
+
+window.showLockedWorldMessage = function(worldId) {
+  if (worldId === "algebra") {
+    alert("Algebrum masih terkunci. Selesaikan Prime Verba hingga mencapai Stage 8 terlebih dahulu.");
+    return;
+  }
+
+  if (worldId === "geometry") {
+    alert("Geometria belum tersedia. Area ini masih dalam pengembangan.");
+    return;
+  }
+
+  if (worldId === "data") {
+    alert("Statica belum tersedia. Area ini masih dalam pengembangan.");
+    return;
+  }
+
+  alert("Area ini masih terkunci.");
+};
 
 function renderPaths(nodes){
   let html = "";

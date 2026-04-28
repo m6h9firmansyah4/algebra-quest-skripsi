@@ -16,14 +16,14 @@ window.renderProfileScreen = function(){
   <div class="p-4 max-w-md mx-auto fade-in">
 
     <!-- HEADER -->
-    <div class="glass-panel text-center">
+    <div id="profileHeader" class="glass-panel text-center">
       <div class="text-3xl mb-2">👤</div>
       <div class="font-bold text-xl">${p.name}</div>
       <div class="text-yellow-400">${gs.title || "Pemula"}</div>
     </div>
 
     <!-- STATUS -->
-    <div class="glass-panel mt-3">
+    <div id="profileStatusPanel" class="glass-panel mt-3">
       <div class="font-bold mb-2">📊 Status</div>
       <div>❤️ HP: ${p.hp}/${p.maxHp}</div>
       <div>⚔️ Attack: ${p.attack}</div>
@@ -31,20 +31,8 @@ window.renderProfileScreen = function(){
       <div>⭐ Level: ${p.level}</div>
     </div>
 
-    <!-- SKILL -->
-    <div class="glass-panel mt-3">
-      <div class="font-bold mb-2">⚡ Skill</div>
-
-      ${(gs.skills || []).map(s => `
-        <div class="flex justify-between">
-          <span>${s.name}</span>
-          <span>Power ${s.power}</span>
-        </div>
-      `).join("") || "<div class='text-gray-400'>Belum ada skill</div>"}
-    </div>
-
     <!-- ACHIEVEMENT -->
-    <div class="glass-panel mt-3">
+    <div id="profileAchievementPanel" class="glass-panel mt-3">
       <div class="font-bold mb-2">🏆 Achievement</div>
 
       ${(gs.achievements || []).map(a => `
@@ -56,7 +44,7 @@ window.renderProfileScreen = function(){
     </div>
 
     <!-- PILIH GELAR -->
-    <div class="glass-panel mt-3">
+    <div id="profileTitlePanel" class="glass-panel mt-3">
       <div class="font-bold mb-2">🎖 Pilih Gelar</div>
 
       ${(gs.achievements || []).map(a => `
@@ -67,10 +55,9 @@ window.renderProfileScreen = function(){
       `).join("")}
     </div>
 
-    <button onclick="goTo('home')" class="btn btn-gray mt-4 w-full">
+    <button id="profileBackBtn" onclick="goTo('home')" class="btn btn-gray mt-4 w-full">
       ⬅️ Kembali
     </button>
-
   </div>
   `;
 };

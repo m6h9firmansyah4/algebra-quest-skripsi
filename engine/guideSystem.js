@@ -70,7 +70,11 @@ getStepsByScreen() {
     return [
       {
         target: "#playerCard",
-        text: "Ini adalah kartu karaktermu. Di sini kamu bisa melihat nama, HP, level, gold, dan EXP."
+        text: "Ini adalah kartu karaktermu. Di sini kamu bisa melihat nama, HP, level, dan EXP."
+      },
+      {
+        target: "#lifePointsCard",
+        text: "Ini adalah LifePoints. Jika kamu kalah atau kabur dari battle, LifePoints akan berkurang. LifePoints akan pulih otomatis setiap 3 jam sampai maksimal 5."
       },
       {
         target: "#profileBtn",
@@ -104,66 +108,131 @@ getStepsByScreen() {
   }
 
   // =========================
+  // TUTORIAL SCREEN
+  // =========================
+  if (screen === "tutorial") {
+    return [
+      {
+        target: "#tutorialScreen",
+        text: "Ini adalah halaman tutorial utama. Di sini kamu bisa membaca panduan bermain Algebra Quest."
+      },
+      {
+        target: ".tutorial-hero",
+        text: "Bagian ini berisi judul dan penjelasan singkat tentang cara menggunakan tutorial."
+      },
+      {
+        target: ".tutorial-stack",
+        text: "Bagian ini berisi daftar tutorial yang bisa dibuka satu per satu."
+      },
+      {
+        target: "#tutorialSection-0",
+        text: "Bagian pertama menjelaskan apa itu Algebra Quest dan tujuan permainannya."
+      },
+      {
+        target: "#tutorialSection-1",
+        text: "Bagian ini menjelaskan alur bermain mulai dari login, home, memilih area, map, stage, battle, menang, sampai naik level."
+      },
+      {
+        target: "#tutorialSection-2",
+        text: "Bagian ini menjelaskan cara menjawab soal pada battle screen, termasuk contoh bentuk soal."
+      },
+      {
+        target: "#tutorialSection-3",
+        text: "Bagian ini menjelaskan area atau world yang tersedia di dalam game."
+      },
+      {
+        target: "#tutorialSection-4",
+        text: "Bagian ini menjelaskan susunan materi pada Prime Verda World."
+      },
+      {
+        target: "#tutorialSection-5",
+        text: "Bagian ini menjelaskan susunan materi pada Algebrum World."
+      },
+      {
+        target: "#tutorialBackBtn",
+        text: "Gunakan tombol ini untuk kembali ke halaman Home."
+      },
+      {
+        target: "body",
+        text: "Tutorial ini bisa dibuka kapan saja jika kamu lupa alur permainan atau ingin membaca penjelasan materi. 📘"
+      }
+    ];
+  }
+
+
+  // =========================
   // MAP SCREEN
   // =========================
   if (screen === "map") {
     const isIslandView = !!document.querySelector("#worldMap");
 
-    // LIST DUNIA
+    // LIST AREA
     if (!isIslandView) {
       return [
         {
           target: "#mapTitle",
-          text: "Di halaman ini kamu memilih dunia yang ingin dijelajahi."
+          text: "Di halaman ini kamu memilih area petualangan yang ingin dijelajahi."
+        },
+        {
+          target: "#mapSubtitle",
+          text: "Geser ke kiri atau ke kanan untuk melihat semua area yang tersedia."
         },
         {
           target: "#worldScroll",
-          text: "Geser bagian ini ke kiri atau ke kanan untuk melihat semua dunia yang tersedia."
+          text: "Bagian ini berisi daftar area petualangan. Area yang masih terkunci belum bisa dimainkan."
         },
         {
           target: "#worldCard-numbers",
-          text: "Ini adalah Dunia Bilangan. Klik untuk masuk dan mempelajari materi bilangan."
+          text: "Ini adalah Prime Verba. Area ini terbuka sejak awal dan Stage 1 bisa langsung dimainkan."
         },
         {
           target: "#worldCard-algebra",
-          text: "Ini adalah Dunia Aljabar. Di sini kamu akan belajar bentuk dan persamaan aljabar."
+          text: "Ini adalah Algebrum. Area ini akan terbuka setelah Prime Verba mencapai Stage 8."
         },
         {
           target: "#worldCard-geometry",
-          text: "Kalau dunia ini masih terkunci, berarti kontennya belum bisa dimainkan."
+          text: "Ini adalah Geometria. Area ini masih dalam pengembangan."
+        },
+        {
+          target: "#worldCard-data",
+          text: "Ini adalah Statica. Area ini juga masih dalam pengembangan."
         },
         {
           target: "#mapBackBtn",
-          text: "Tombol ini membawamu kembali ke halaman utama."
+          text: "Tombol ini membawamu kembali ke halaman Home."
         },
         {
           target: "body",
-          text: "Pilih dunia yang ingin kamu jelajahi, lalu lanjutkan ke stage di dalamnya. 🌍"
+          text: "Mulailah dari Prime Verba, selesaikan stage secara berurutan, lalu buka area berikutnya. 🌍"
         }
       ];
     }
 
-    // DALAM DUNIA / ISLAND VIEW
+    // DALAM AREA / ISLAND VIEW
     return [
       {
         target: "#zoneHeader",
-        text: "Bagian ini menunjukkan nama zona dan materi yang sedang kamu masuki."
+        text: "Bagian ini menunjukkan nama area dan materi yang sedang kamu masuki."
       },
       {
-        target: "#stageNodes .node",
-        text: "Lingkaran-lingkaran ini adalah stage. Klik salah satu stage untuk memulai soal dan pertarungan."
+        target: "#stageNodes .node:not(.locked-node)",
+        text: "Stage yang terbuka bisa diklik untuk memulai battle."
+      },
+      {
+        target: "#stageNodes .locked-node",
+        text: "Stage dengan ikon kunci belum bisa dimainkan. Selesaikan stage sebelumnya untuk membukanya."
       },
       {
         target: "#worldMapScroller",
-        text: "Geser area ini ke kanan atau ke kiri untuk melihat stage lain dalam dunia yang sama."
+        text: "Geser area map ke kiri atau kanan untuk melihat stage lain dalam area ini."
       },
       {
         target: "#islandBackBtn",
-        text: "Tombol ini digunakan untuk kembali ke daftar dunia."
+        text: "Tombol ini digunakan untuk kembali ke daftar area."
       },
       {
         target: "body",
-        text: "Kalau sudah menemukan stage yang ingin dimainkan, klik stage itu untuk mulai battle. 🚀"
+        text: "Setiap kali kamu menang battle, stage berikutnya akan terbuka secara otomatis. 🚀"
       }
     ];
   }
@@ -203,7 +272,7 @@ getStepsByScreen() {
       },
       {
         target: "#battleLog",
-        text: "Log battle mencatat apa yang terjadi selama pertarungan, seperti damage, efek skill, dan hasil jawaban."
+        text: "Log battle mencatat apa yang terjadi selama pertarungan, seperti damage, dan hasil jawaban."
       },
       {
         target: "body",
@@ -218,12 +287,28 @@ getStepsByScreen() {
   if (screen === "profile") {
     return [
       {
-        target: ".glass-panel",
-        text: "Di halaman profil kamu bisa melihat status karakter, skill, achievement, dan gelar yang dimiliki."
+        target: "#profileHeader",
+        text: "Ini adalah identitas karaktermu. Di sini terlihat nama dan gelar yang sedang digunakan."
+      },
+      {
+        target: "#profileStatusPanel",
+        text: "Bagian ini menampilkan status utama karakter, seperti HP, attack, defense, dan level."
+      },
+      {
+        target: "#profileAchievementPanel",
+        text: "Bagian ini menampilkan achievement yang sudah tersedia beserta bonus damage-nya."
+      },
+      {
+        target: "#profileTitlePanel",
+        text: "Di sini kamu bisa memilih gelar. Gelar tertentu dapat memberikan bonus damage saat battle."
+      },
+      {
+        target: "#profileBackBtn",
+        text: "Gunakan tombol ini untuk kembali ke halaman Home."
       },
       {
         target: "body",
-        text: "Gunakan halaman ini untuk memantau perkembangan karaktermu."
+        text: "Halaman profil membantu kamu melihat perkembangan karakter selama bermain. 👤"
       }
     ];
   }
@@ -266,12 +351,36 @@ getStepsByScreen() {
   if (screen === "setting") {
     return [
       {
-        target: ".glass-panel",
-        text: "Di halaman ini kamu bisa mengatur sound effect, music, menyimpan progress, atau mereset permainan."
+        target: "#settingHeader",
+        text: "Ini adalah halaman pengaturan game."
+      },
+      {
+        target: "#audioSettingPanel",
+        text: "Bagian ini digunakan untuk mengatur suara dan musik dalam game."
+      },
+      {
+        target: "#soundToggleBtn",
+        text: "Tombol ini digunakan untuk menyalakan atau mematikan sound effect."
+      },
+      {
+        target: "#musicToggleBtn",
+        text: "Tombol ini digunakan untuk menyalakan atau mematikan musik latar."
+      },
+      {
+        target: "#saveProgressBtn",
+        text: "Gunakan tombol ini untuk menyimpan progress permainan ke Firebase."
+      },
+      {
+        target: "#resetProgressBtn",
+        text: "Tombol ini digunakan untuk mereset progress permainan. Gunakan dengan hati-hati karena data akan dikembalikan ke awal."
+      },
+      {
+        target: "#settingBackBtn",
+        text: "Gunakan tombol ini untuk kembali ke halaman Home."
       },
       {
         target: "body",
-        text: "Gunakan pengaturan ini untuk menyesuaikan pengalaman bermainmu."
+        text: "Pengaturan membantu kamu mengontrol audio, menyimpan progress, dan mengatur ulang permainan. ⚙️"
       }
     ];
   }

@@ -286,9 +286,13 @@ function createQuestion({
 }
 
 function makeBossPhase(questionObj, phaseId, damage) {
+  const originalStage = questionObj.stage;
+
   return {
     ...questionObj,
     id: phaseId,
+    sourceStage: originalStage,
+    timerStage: originalStage,
     stage: 17,
     damage,
     difficulty: "boss"
