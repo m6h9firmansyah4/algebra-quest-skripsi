@@ -23,6 +23,7 @@ window.setTitle = function(title) {
 window.renderProfileScreen = function() {
   const gs = window.gameState;
   const p = gs.player;
+  const theme = window.AQ_THEME;
 
   const unlockedAchievements = window.AQ_MODEL?.helpers?.getUnlockedAchievements(gs) || [];
   const titleBonus = window.getTitleBonus(gs);
@@ -36,134 +37,216 @@ window.renderProfileScreen = function() {
   const safeTitle = gs.title || "Pemula";
 
   return `
-  <div class="p-4 max-w-md mx-auto fade-in">
+  <div 
+    class="p-4 max-w-md mx-auto fade-in"
+    style="${theme.shell}"
+  >
 
     <!-- HEADER -->
-    <div id="profileHeader" class="glass-panel text-center">
+    <div 
+      id="profileHeader" 
+      class="glass-panel text-center"
+      style="${theme.headerPanel}"
+    >
       <div class="text-3xl mb-2">👤</div>
 
-      <div class="font-bold text-xl">
+      <div 
+        class="font-bold text-xl"
+        style="${theme.goldTitle}"
+      >
         ${p.name}
       </div>
 
-      <div class="text-yellow-400 font-bold mt-1">
+      <div 
+        class="font-bold mt-1"
+        style="color:#fde68a;"
+      >
         ${safeTitle}
       </div>
 
-      <div class="text-sm text-gray-400 mt-1">
+      <div 
+        class="text-sm mt-1"
+        style="color:#93c5fd;"
+      >
         ${rank}
       </div>
     </div>
 
     <!-- STATUS UTAMA -->
-    <div id="profileStatusPanel" class="glass-panel mt-3">
-      <div class="font-bold mb-3">📊 Status Pemain</div>
+    <div 
+      id="profileStatusPanel" 
+      class="glass-panel mt-3"
+      style="${theme.panel}"
+    >
+      <div 
+        class="font-bold mb-3"
+        style="${theme.blueTitle}"
+      >
+        📊 Status Pemain
+      </div>
 
       <div class="grid grid-cols-2 gap-2">
-        <div class="p-2 rounded-lg bg-slate-900/60">
-          <div class="text-xs text-gray-400">HP</div>
-          <div class="font-bold text-red-300">❤️ ${p.hp}/${p.maxHp}</div>
+        <div class="p-2 rounded-lg" style="${theme.statCard("red")}">
+          <div class="text-xs" style="color:#fecaca;">HP</div>
+          <div class="font-bold" style="color:#f87171;">❤️ ${p.hp}/${p.maxHp}</div>
         </div>
 
-        <div class="p-2 rounded-lg bg-slate-900/60">
-          <div class="text-xs text-gray-400">LifePoints</div>
-          <div class="font-bold text-red-400">❤️ ${lifePoints}/${maxLifePoints}</div>
+        <div class="p-2 rounded-lg" style="${theme.statCard("red")}">
+          <div class="text-xs" style="color:#fecaca;">LifePoints</div>
+          <div class="font-bold" style="color:#fb7185;">❤️ ${lifePoints}/${maxLifePoints}</div>
         </div>
 
-        <div class="p-2 rounded-lg bg-slate-900/60">
-          <div class="text-xs text-gray-400">Attack</div>
-          <div class="font-bold text-orange-300">⚔️ ${p.attack}</div>
+        <div class="p-2 rounded-lg" style="${theme.statCard("orange")}">
+          <div class="text-xs" style="color:#fed7aa;">Attack</div>
+          <div class="font-bold" style="color:#fb923c;">⚔️ ${p.attack}</div>
         </div>
 
-        <div class="p-2 rounded-lg bg-slate-900/60">
-          <div class="text-xs text-gray-400">Defense</div>
-          <div class="font-bold text-blue-300">🛡️ ${p.defense}</div>
+        <div class="p-2 rounded-lg" style="${theme.statCard("blue")}">
+          <div class="text-xs" style="color:#bfdbfe;">Defense</div>
+          <div class="font-bold" style="color:#60a5fa;">🛡️ ${p.defense}</div>
         </div>
 
-        <div class="p-2 rounded-lg bg-slate-900/60">
-          <div class="text-xs text-gray-400">Level</div>
-          <div class="font-bold text-yellow-400">⭐ ${p.level}</div>
+        <div class="p-2 rounded-lg" style="${theme.statCard("gold")}">
+          <div class="text-xs" style="color:#fde68a;">Level</div>
+          <div class="font-bold" style="color:#facc15;">⭐ ${p.level}</div>
         </div>
 
-        <div class="p-2 rounded-lg bg-slate-900/60">
-          <div class="text-xs text-gray-400">Bonus Gelar</div>
-          <div class="font-bold text-green-400">+${titleBonus} DMG</div>
+        <div class="p-2 rounded-lg" style="${theme.statCard("green")}">
+          <div class="text-xs" style="color:#bbf7d0;">Bonus Gelar</div>
+          <div class="font-bold" style="color:#34d399;">+${titleBonus} DMG</div>
         </div>
       </div>
     </div>
 
     <!-- EXP -->
-    <div class="glass-panel mt-3">
+    <div 
+      class="glass-panel mt-3"
+      style="${theme.softPanel}"
+    >
       <div class="flex justify-between items-center mb-2">
-        <div class="font-bold">⭐ EXP</div>
-        <div class="text-sm text-yellow-400">
+        <div 
+          class="font-bold"
+          style="color:#bfdbfe;"
+        >
+          ⭐ EXP
+        </div>
+
+        <div 
+          class="text-sm font-bold"
+          style="color:#facc15;"
+        >
           ${p.exp}/${p.expToNext}
         </div>
       </div>
 
-      <div class="progress-bar">
+      <div 
+        class="progress-bar"
+        style="background: rgba(15,23,42,0.85); height: 10px;"
+      >
         <div 
           class="progress-fill" 
-          style="width:${Math.min(100, Math.floor((p.exp / p.expToNext) * 100))}%">
+          style="
+            width:${Math.min(100, Math.floor((p.exp / p.expToNext) * 100))}%;
+            background: linear-gradient(to right, #facc15, #f97316);
+            box-shadow: 0 0 12px rgba(250,204,21,0.35);
+          ">
         </div>
       </div>
     </div>
 
     <!-- POIN DAN STREAK -->
-    <div class="glass-panel mt-3">
-      <div class="font-bold mb-3">🎮 Rekap Permainan</div>
+    <div 
+      class="glass-panel mt-3"
+      style="${theme.panel}"
+    >
+      <div 
+        class="font-bold mb-3"
+        style="${theme.blueTitle}"
+      >
+        🎮 Rekap Permainan
+      </div>
 
       <div class="grid grid-cols-2 gap-2">
-        <div class="p-2 rounded-lg bg-slate-900/60 text-center">
-          <div class="text-xs text-gray-400">Total Poin</div>
-          <div class="font-bold text-yellow-400">💎 ${points}</div>
+        <div class="p-2 rounded-lg text-center" style="${theme.statCard("gold")}">
+          <div class="text-xs" style="color:#fde68a;">Total Poin</div>
+          <div class="font-bold" style="color:#facc15;">💎 ${points}</div>
         </div>
 
-        <div class="p-2 rounded-lg bg-slate-900/60 text-center">
-          <div class="text-xs text-gray-400">Best Streak</div>
-          <div class="font-bold text-orange-300">🔥 ${bestStreak}</div>
+        <div class="p-2 rounded-lg text-center" style="${theme.statCard("orange")}">
+          <div class="text-xs" style="color:#fed7aa;">Best Streak</div>
+          <div class="font-bold" style="color:#fb923c;">🔥 ${bestStreak}</div>
         </div>
       </div>
     </div>
 
     <!-- ACHIEVEMENT -->
-    <div id="profileAchievementPanel" class="glass-panel mt-3">
-      <div class="font-bold mb-2">🏆 Achievement Terbuka</div>
+    <div 
+      id="profileAchievementPanel" 
+      class="glass-panel mt-3"
+      style="${theme.panel}"
+    >
+      <div 
+        class="font-bold mb-2"
+        style="${theme.blueTitle}"
+      >
+        🏆 Achievement Terbuka
+      </div>
 
       ${
         unlockedAchievements.length
           ? unlockedAchievements.map(function(a) {
               return `
-                <div class="flex justify-between border-b border-white/10 py-2">
-                  <span>${a.icon} ${a.name}</span>
-                  <span class="text-yellow-400">+${a.bonus} DMG</span>
+                <div 
+                  class="flex justify-between py-2"
+                  style="border-bottom: 1px solid rgba(255,255,255,0.10);"
+                >
+                  <span style="color:#e2e8f0;">${a.icon} ${a.name}</span>
+                  <span style="color:#facc15;">+${a.bonus} DMG</span>
                 </div>
               `;
             }).join("")
-          : "<div class='text-gray-400'>Belum ada achievement</div>"
+          : "<div style='color:#94a3b8;'>Belum ada achievement</div>"
       }
     </div>
 
     <!-- PILIH GELAR -->
-    <div id="profileTitlePanel" class="glass-panel mt-3">
-      <div class="font-bold mb-2">🎖 Pilih Gelar</div>
+    <div 
+      id="profileTitlePanel" 
+      class="glass-panel mt-3"
+      style="${theme.softPanel}"
+    >
+      <div 
+        class="font-bold mb-2"
+        style="${theme.blueTitle}"
+      >
+        🎖 Pilih Gelar
+      </div>
 
       ${
         unlockedAchievements.length
           ? unlockedAchievements.map(function(a) {
-              const activeClass = gs.title === a.name ? "btn-yellow" : "btn-gray";
+              const buttonType = gs.title === a.name ? "gold" : "gray";
 
               return `
-                <button onclick="setTitle('${a.name}')" class="btn ${activeClass}">
+                <button 
+                  onclick="setTitle('${a.name}')" 
+                  class="btn"
+                  style="${theme.buttonStyle(buttonType)}"
+                >
                   ${a.icon} ${a.name}
                 </button>
               `;
             }).join("")
-          : "<div class='text-gray-400'>Selesaikan stage untuk membuka gelar.</div>"
+          : "<div style='color:#94a3b8;'>Selesaikan stage untuk membuka gelar.</div>"
       }
     </div>
 
-    <button id="profileBackBtn" onclick="goTo('home')" class="btn btn-gray mt-4 w-full">
+    <button 
+      id="profileBackBtn" 
+      onclick="goTo('home')" 
+      class="btn mt-4 w-full"
+      style="${theme.buttonStyle("gray")}"
+    >
       ⬅️ Kembali
     </button>
 

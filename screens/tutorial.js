@@ -343,20 +343,48 @@ const tutorialSections = [
 ];
 
 function renderTutorialAccordion() {
+  const theme = window.AQ_THEME;
+
   return tutorialSections.map((section, index) => `
     <details 
       id="tutorialSection-${index}"
       class="tutorial-accordion glass-panel" 
+      style="${theme.panel}"
       ${index === 0 ? "open" : ""}
     >
-      <summary id="tutorialSummary-${index}" class="tutorial-summary">
+      <summary 
+        id="tutorialSummary-${index}" 
+        class="tutorial-summary"
+        style="
+          background: rgba(15,23,42,0.45);
+        "
+      >
         <div class="tutorial-summary-text">
-          <div class="tutorial-section-label">Bagian ${index + 1}</div>
-          <div class="tutorial-section-title">${section.title}</div>
+          <div 
+            class="tutorial-section-label"
+            style="color:#93c5fd;"
+          >
+            Bagian ${index + 1}
+          </div>
+
+          <div 
+            class="tutorial-section-title"
+            style="color:#f8fafc;"
+          >
+            ${section.title}
+          </div>
         </div>
       </summary>
 
-      <div id="tutorialBody-${index}" class="tutorial-body">
+      <div 
+        id="tutorialBody-${index}" 
+        class="tutorial-body"
+        style="
+          background: rgba(2,6,23,0.42);
+          color: #d1d5db;
+          border-top: 1px solid rgba(255,255,255,0.08);
+        "
+      >
         ${section.body}
       </div>
     </details>
@@ -364,12 +392,30 @@ function renderTutorialAccordion() {
 }
 
 window.renderTutorialScreen = function () {
-  return `
-    <div id="tutorialScreen" class="tutorial-shell p-6 max-w-3xl mx-auto fade-in">
+  const theme = window.AQ_THEME;
 
-      <div class="tutorial-hero glass-panel">
-        <h2 class="tutorial-main-title">Tutorial Bermain</h2>
-        <p class="tutorial-main-subtitle">
+  return `
+    <div 
+      id="tutorialScreen" 
+      class="tutorial-shell p-6 max-w-3xl mx-auto fade-in"
+      style="${theme.shell}"
+    >
+
+      <div 
+        class="tutorial-hero glass-panel"
+        style="${theme.headerPanel}"
+      >
+        <h2 
+          class="tutorial-main-title"
+          style="${theme.goldTitle}"
+        >
+          📘 Tutorial Bermain
+        </h2>
+
+        <p 
+          class="tutorial-main-subtitle"
+          style="${theme.mutedText}"
+        >
           Tekan salah satu bagian di bawah ini untuk membuka penjelasannya.
         </p>
       </div>
@@ -378,8 +424,13 @@ window.renderTutorialScreen = function () {
         ${renderTutorialAccordion()}
       </div>
 
-      <button id="tutorialBackBtn" onclick="goTo('home')" class="btn btn-gray w-full mt-5">
-        Kembali ke Home
+      <button 
+        id="tutorialBackBtn" 
+        onclick="goTo('home')" 
+        class="btn w-full mt-5"
+        style="${theme.buttonStyle("gray")}"
+      >
+        ⬅️ Kembali ke Home
       </button>
     </div>
   `;

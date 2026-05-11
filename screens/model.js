@@ -466,3 +466,180 @@ window.addGameHistory = function(entry) {
     window.saveProgress(window.gameState);
   }
 };
+
+/* =========================================================
+   ALGEBRA QUEST - GLOBAL THEME
+   Tema ini menyamakan warna seluruh screen dengan Home Screen.
+========================================================= */
+
+window.AQ_THEME = window.AQ_THEME || {
+  shell: `
+    min-height: 100dvh;
+    background:
+      radial-gradient(circle at top, rgba(37,99,235,0.18), transparent 35%),
+      radial-gradient(circle at bottom, rgba(147,51,234,0.16), transparent 38%);
+  `,
+
+  headerPanel: `
+    background:
+      linear-gradient(180deg, rgba(30,41,59,0.88), rgba(15,23,42,0.86));
+    border: 1px solid rgba(250,204,21,0.30);
+    box-shadow: 0 0 25px rgba(250,204,21,0.12);
+  `,
+
+  panel: `
+    background:
+      linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,41,59,0.82));
+    border: 1px solid rgba(96,165,250,0.28);
+    box-shadow: 0 0 26px rgba(59,130,246,0.14);
+  `,
+
+  softPanel: `
+    background:
+      linear-gradient(180deg, rgba(15,23,42,0.90), rgba(30,41,59,0.78));
+    border: 1px solid rgba(148,163,184,0.18);
+    box-shadow: 0 0 22px rgba(15,23,42,0.55);
+  `,
+
+  goldTitle: `
+    color: #facc15;
+    text-shadow: 0 0 14px rgba(250,204,21,0.35);
+  `,
+
+  blueTitle: `
+    color: #bfdbfe;
+    text-shadow: 0 0 12px rgba(96,165,250,0.20);
+  `,
+
+  mutedText: `
+    color: #cbd5e1;
+  `,
+
+  subText: `
+    color: #94a3b8;
+  `,
+
+  buttonStyle: function(type) {
+    const styles = {
+      green: `
+        background: linear-gradient(135deg, #10b981, #047857);
+        color: #ecfdf5;
+        box-shadow: 0 0 18px rgba(16,185,129,0.28);
+      `,
+
+      blue: `
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        color: #eff6ff;
+        box-shadow: 0 0 18px rgba(37,99,235,0.28);
+      `,
+
+      teal: `
+        background: linear-gradient(135deg, #0f766e, #115e59);
+        color: #f0fdfa;
+        box-shadow: 0 0 18px rgba(20,184,166,0.22);
+      `,
+
+      purple: `
+        background: linear-gradient(135deg, #9333ea, #6b21a8);
+        color: #faf5ff;
+        box-shadow: 0 0 18px rgba(147,51,234,0.28);
+      `,
+
+      gold: `
+        background: linear-gradient(135deg, #f59e0b, #b45309);
+        color: #fff7ed;
+        box-shadow: 0 0 18px rgba(245,158,11,0.28);
+      `,
+
+      red: `
+        background: linear-gradient(135deg, #ef4444, #991b1b);
+        color: #fef2f2;
+        box-shadow: 0 0 18px rgba(239,68,68,0.28);
+      `,
+
+      gray: `
+        background: linear-gradient(135deg, #475569, #1e293b);
+        color: #f8fafc;
+        box-shadow: 0 0 18px rgba(148,163,184,0.18);
+      `
+    };
+
+    return styles[type] || styles.gray;
+  },
+
+  statCard: function(type) {
+    const styles = {
+      gold: `
+        background: rgba(120,53,15,0.35);
+        border: 1px solid rgba(250,204,21,0.32);
+        box-shadow: 0 0 12px rgba(250,204,21,0.12);
+      `,
+
+      orange: `
+        background: rgba(124,45,18,0.35);
+        border: 1px solid rgba(251,146,60,0.32);
+        box-shadow: 0 0 12px rgba(251,146,60,0.12);
+      `,
+
+      purple: `
+        background: rgba(88,28,135,0.35);
+        border: 1px solid rgba(192,132,252,0.32);
+        box-shadow: 0 0 12px rgba(192,132,252,0.12);
+      `,
+
+      red: `
+        background: rgba(127,29,29,0.28);
+        border: 1px solid rgba(248,113,113,0.35);
+        box-shadow: 0 0 16px rgba(248,113,113,0.13);
+      `,
+
+      blue: `
+        background: rgba(30,64,175,0.25);
+        border: 1px solid rgba(96,165,250,0.30);
+        box-shadow: 0 0 14px rgba(96,165,250,0.12);
+      `,
+
+      green: `
+        background: rgba(6,95,70,0.28);
+        border: 1px solid rgba(52,211,153,0.32);
+        box-shadow: 0 0 14px rgba(52,211,153,0.12);
+      `
+    };
+
+    return styles[type] || styles.blue;
+  },
+
+  worldColor: function(worldId) {
+    const colors = {
+      numbers: {
+        border: "rgba(16,185,129,0.35)",
+        glow: "rgba(16,185,129,0.18)",
+        fill: "linear-gradient(to right, #34d399, #10b981)"
+      },
+
+      algebra: {
+        border: "rgba(245,158,11,0.35)",
+        glow: "rgba(245,158,11,0.18)",
+        fill: "linear-gradient(to right, #fbbf24, #f97316)"
+      },
+
+      geometry: {
+        border: "rgba(56,189,248,0.35)",
+        glow: "rgba(56,189,248,0.18)",
+        fill: "linear-gradient(to right, #38bdf8, #2563eb)"
+      },
+
+      data: {
+        border: "rgba(168,85,247,0.35)",
+        glow: "rgba(168,85,247,0.18)",
+        fill: "linear-gradient(to right, #a855f7, #7c3aed)"
+      }
+    };
+
+    return colors[worldId] || {
+      border: "rgba(148,163,184,0.25)",
+      glow: "rgba(148,163,184,0.12)",
+      fill: "linear-gradient(to right, #94a3b8, #475569)"
+    };
+  }
+};
