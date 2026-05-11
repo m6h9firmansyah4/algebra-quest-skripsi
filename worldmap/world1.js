@@ -305,7 +305,7 @@ function makeBossPhase(questionObj, phaseId, damage) {
 
 // Stage 1
 function stage1w1() {
-  const limit = 40;
+  const limit = 20;
 
   let a = randInt(-limit, limit);
   let b = randInt(-limit, limit);
@@ -347,7 +347,7 @@ function stage2w1() {
 }
 
 function stage3w1() {
-  const resultLimit = 20;
+  const resultLimit = 15;
   const divisorLimit = 10;
 
   let result;
@@ -379,7 +379,7 @@ function stage3w1() {
 function stage4w1() {
   const ops = ["+", "-", "×", "÷"];
 
-  const numberLimit = 25;
+  const numberLimit = 15;
   const divisorLimit = 10;
 
   for (let attempt = 0; attempt < 100; attempt++) {

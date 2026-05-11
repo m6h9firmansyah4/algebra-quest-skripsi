@@ -1,14 +1,14 @@
-/* =========================
-   BASE STYLE
-========================= */
-body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(to bottom, #020617, #020617);
-  color: white;
-  touch-action: pan-x pan-y;
-}
+/* =========================================================
+   STYLE.CSS - ORGANIZED VERSION
+   Catatan: class dan id utama tetap dipertahankan agar aman
+   digunakan bersama kode HTML/JavaScript yang sudah ada.
+========================================================= */
 
-html, body {
+/* =========================================================
+   01. GLOBAL BASE
+========================================================= */
+html,
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -18,1068 +18,16 @@ html, body {
   overscroll-behavior: none;
 }
 
-#app, #root, .container {
-  touch-action: pan-x pan-y;
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom, #020617, #020617);
+  color: white;
 }
-/* container utama */
+
+#app,
+#root,
 .container {
-  max-width: 480px;
-  margin: auto;
-  padding: 20px;
-}
-
-/* =========================
-   BUTTON SYSTEM
-========================= */
-.btn {
-  padding: 14px;
-  border-radius: 12px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  margin-bottom: 10px;
-  transition: all 0.2s ease;
-}
-
-.btn-blue { background: #2563eb; color: white; }
-.btn-gray { background: #4b5563; color: white; }
-.btn-green { background: #16a34a; color: white; }
-.btn-purple { background: #7c3aed; color: white; }
-.btn-red { background: #dc2626; color: white; }
-.btn-yellow { background: #f59e0b; color: white; }
-
-.btn:hover {
-  transform: scale(1.03);
-  opacity: 0.9;
-}
-
-.btn:active {
-  transform: scale(0.97);
-}
-
-/* =========================
-   GLASS PANEL
-========================= */
-.glass-panel {
-  background: rgba(255,255,255,0.05);
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 12px;
-  backdrop-filter: blur(6px);
-}
-
-/* =========================
-   CATEGORY (STAGE MENU)
-========================= */
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.category-card {
-  background: rgba(255,255,255,0.05);
-  padding: 16px;
-  border-radius: 14px;
-  text-align: center;
-  transition: 0.2s;
-}
-
-.category-card:hover {
-  transform: scale(1.05);
-  background: rgba(255,255,255,0.1);
-}
-
-.category-card.locked {
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-/* =========================
-   INPUT GAME
-========================= */
-.game-input {
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-  background: #1e293b;
-  color: white;
-  width: 100%;
-}
-
-/* =========================
-   HP BAR SYSTEM
-========================= */
-.hp-bar {
-  height: 12px;
-  border-radius: 10px;
-  background: #1e293b;
-  overflow: hidden;
-  margin-top: 5px;
-}
-
-.hp-fill {
-  height: 100%;
-  background: linear-gradient(to right, #22c55e, #16a34a);
-}
-
-/* =========================
-   ENEMY CARD
-========================= */
-.enemy-card {
-  text-align: center;
-  padding: 12px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 14px;
-}
-
-/* =========================
-   BATTLE LOG
-========================= */
-.battle-log {
-  background: #020617;
-  border-radius: 10px;
-  padding: 10px;
-  height: 120px;
-  overflow-y: auto;
-  font-size: 0.85rem;
-}
-
-/* =========================
-   FADE ANIMATION
-========================= */
-.fade-in {
-  animation: fade 0.3s ease-in;
-}
-
-@keyframes fade {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ================= MAP SYSTEM ================= */
-
-#mapWrapper {
-  height: calc(100dvh - 100px);
-}
-
-#islandWrapper {
-  height: 100dvh;
-}
-
-.map-wrapper {
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  position: relative;
-  touch-action: none;
-  overscroll-behavior: none;
-}
-
-/* island */
-.island {
-  position: absolute;
-  width: 100px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.island:hover {
-  transform: scale(1.1);
-}
-
-/* node stage */
-.node {
-  position: absolute;
-  border-radius: 50%;
-  border: 3px solid white;
-  outline: 3px solid rgba(255,255,255,0.2);
-
-  background: linear-gradient(145deg, #3b82f6, #1e40af);
-  color: white;
-
-  font-weight: bold;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  box-shadow: 0 0 12px rgba(59,130,246,0.8);
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-
-
-.stageNode {
-  pointer-events: none; /* 🔥 INI KUNCI */
-}
-
-/* bottom bar */
-.bottom-bar {
-  position: absolute;
-  bottom: 15px;
-  left: 15px;
-  right: 15px;
-  display: flex;
-  gap: 10px;
-}
-
-.small-btn {
-  width: 60px;
-}
-
-.materi-btn {
-  flex: 1;
-  border-radius: 999px;
-}
-
-/* overlay materi */
-.materi-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  align-items: flex-end;
-}
-
-.materi-content {
-  width: 100%;
-  max-height: 80%;
-  background: #020617;
-  border-radius: 20px 20px 0 0;
-  padding: 15px;
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-.materi-header {
-  display: flex;
-  justify-content: space-between;
-}
-
-.materi-body {
-  overflow-y: auto;
-}
-
-.map-bg {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-}
-
-.map-full:active {
-  cursor: grabbing;
-}
-
-.map-full img {
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-
-.island {
-  pointer-events: auto;
-}
-
-.map-full {
-  position: absolute;
-  width: 2000px;
-  height: 1200px;
-}
-
-.island-btn {
-  position: absolute;
-  padding: 14px 20px;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 14px;
-  color: white;
-  font-weight: bold;
-  backdrop-filter: blur(6px);
-  cursor: pointer;
-  transition: 0.8s;
-  text-align: center;
-}
-
-.island-btn:hover {
-  transform: scale(1.1);
-  background: rgba(0,0,0,0.7);
-}
-
-.map-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  background: rgba(0,0,0,0.6);
-}
-
-/* scroll container */
-.world-scroll {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  overflow-x: auto;
-  overflow-y: hidden;
-  gap: 24px;
-
-  padding: 20px 40px;
-
-  justify-content: flex-start; /* penting */
-  align-items: center;
-
-  scroll-snap-type: x mandatory;
-
-  scroll-padding-left: 40px;
-}
-
-/* card */
-.world-card {
-  position: relative;
-  min-width: 320px;
-  max-width: 320px;
-  height: 220px;
-
-  flex-shrink: 0;
-
-  border-radius: 24px;
-  overflow: hidden;
-  background: #1e293b;
-
-  scroll-snap-align: center;
-}
-
-@media (max-width: 600px) {
-  .world-card {
-    min-width: 260px;
-    height: 180px;
-  }
-}
-
-.world-card:hover {
-  transform: scale(1.3);
-}
-
-.world-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-#worldMap {
-  background: #020617;
-}
-
-.world-map-scroller {
-  background: #020617;
-}
-
-.map-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  background: rgba(0,0,0,0.6);
-}
-
-.world-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.world-card:active {
-  transform: scale(0.95);
-}
-
-.world-title {
-  position: absolute;
-  bottom: 60px;
-  left: 15px;
-  color: white;
-  font-weight: bold;
-  font-size: 18px;
-  text-shadow: 0 0 10px black;
-}
-
-/* PROGRESS BAR */
-.progress-box {
-  position: absolute;
-  bottom: 12px;
-  left: 16px;
-  right: 16px;
-}
-
-.progress-bar {
-  height: 10px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(to right, #22c55e, #16a34a);
-}
-
-.progress-text {
-  font-size: 12px;
-  margin-top: 4px;
-  color: white;
-}
-
-.node {
-  position: absolute;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  border: 3px solid white;
-  outline: 3px solid rgba(255,255,255,0.2);
-
-  background: linear-gradient(145deg, #3b82f6, #1e40af); /* biru */
-  color: white;
-
-  font-weight: bold;
-  font-size: 14px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  box-shadow: 0 0 12px rgba(59,130,246,0.8);
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.normal-node {
-  /* ukuran diatur dari JS */
-}
-
-.mini-node {
-  background: linear-gradient(145deg, #f97316, #b45309);
-  box-shadow: 0 0 14px orange;
-}
-
-.boss-node {
-  background: radial-gradient(circle, #ef4444, #7f1d1d);
-  box-shadow: 0 0 20px red;
-}
-
-.node:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 18px cyan;
-}
-
-.locked-node {
-  background: #6b7280;
-  box-shadow: none;
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.path-line {
-  position: absolute;
-  height: 7px;
-
-  background: repeating-linear-gradient(
-    to right,
-    #facc15,
-    #facc15 16px,
-    transparent 12px,
-    transparent 20px
-  );
-
-  border-radius: 9px;
-  transform-origin: left center;
-}
-
-.node.completed {
-  background: linear-gradient(145deg, #22c55e, #15803d);
-  box-shadow: 0 0 10px lime;
-}
-
-.algebra-theme .node {
-  background: linear-gradient(145deg, #f97316, #7c2d12);
-  box-shadow: 0 0 12px orange;
-}
-
-.algebra-theme .mini-node {
-  background: linear-gradient(145deg, #ef4444, #7f1d1d);
-}
-
-.algebra-theme .boss-node {
-  background: radial-gradient(circle, #dc2626, #450a0a);
-}
-
-/* THEME GEOMETRY (biru kristal) */
-.geometry-theme .node {
-  background: linear-gradient(145deg, #60a5fa, #1e3a8a);
-  box-shadow: 0 0 12px #60a5fa;
-}
-
-.geometry-theme .mini-node {
-  background: linear-gradient(145deg, #22d3ee, #0e7490);
-  box-shadow: 0 0 14px cyan;
-}
-
-.geometry-theme .boss-node {
-  background: radial-gradient(circle, #38bdf8, #0c4a6e);
-  box-shadow: 0 0 20px #38bdf8;
-}
-
-/* THEME DATA (hijau statistik + grafik) */
-.data-theme .node {
-  background: linear-gradient(145deg, #34d399, #065f46);
-  box-shadow: 0 0 12px #34d399;
-}
-
-.data-theme .mini-node {
-  background: linear-gradient(145deg, #facc15, #a16207);
-  box-shadow: 0 0 14px #facc15;
-}
-
-.data-theme .boss-node {
-  background: radial-gradient(circle, #10b981, #022c22);
-  box-shadow: 0 0 20px #10b981;
-}
-
-.locked-world {
-  opacity: 0.6;
-  filter: grayscale(90%);
-  cursor: not-allowed;
-  position: relative;
-  pointer-events: none;
-}
-
-.coming-soon-badge {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  background: linear-gradient(45deg, #facc15, #f97316);
-  color: black;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 6px 10px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.4);
-}
-
-.battle-arena {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 20px 0;
-}
-
-.fighter {
-  text-align: center;
-}
-
-.avatar {
-  position: relative;
-  width: 110px;
-  height: 110px;
-}
-
-.avatar img {
-  width: 100%;
-  border-radius: 50%;
-}
-
-.hp-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(
-    lime calc(var(--hp)*1%),
-    rgba(255,255,255,0.1) 0%
-  );
-  z-index: 1;
-}
-
-.hp-ring.enemy {
-  background: conic-gradient(
-    red calc(var(--hp)*1%),
-    rgba(255,255,255,0.1) 0%
-  );
-}
-
-.avatar-inner {
-  position: absolute;
-  inset: 8px; /* ini bikin ring terlihat */
-  border-radius: 50%;
-  overflow: hidden;
-  z-index: 2;
-  background: #020617;
-  box-shadow: 0 0 10px rgba(255,255,255,0.2);
-}
-
-.avatar-inner img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.hp-text {
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  font-weight: bold;
-  background: rgba(0,0,0,0.6);
-  padding: 2px 6px;
-  border-radius: 8px;
-}
-
-.vs-text {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.action-bar {
-  display: flex;
-  gap: 10px;
-}
-
-.projectile {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:bold;
-  transition: 0.6s;
-}
-
-.shape-circle { background:red; border-radius:50%; }
-.shape-square { background:blue; }
-.shape-triangle {
-  width:0;height:0;
-  border-left:20px solid transparent;
-  border-right:20px solid transparent;
-  border-bottom:40px solid orange;
-}
-.shape-pentagon {
-  clip-path: polygon(50% 0%,100% 38%,82% 100%,18% 100%,0% 38%);
-  background:purple;
-}
-
-/* =========================
-   GUIDE OVERLAY
-========================= */
-.guide-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 9998;
-  animation: fadeIn 0.3s ease;
-}
-
-/* =========================
-   HIGHLIGHT BOX
-========================= */
-.guide-highlight {
-  position: fixed;
-  border: 3px solid yellow;
-  border-radius: 12px;
-  z-index: 9999;
-  transition: all 0.4s ease;
-  box-shadow: 0 0 20px rgba(255,255,0,0.5);
-}
-
-/* =========================
-   TOOLTIP BOX
-========================= */
-.guide-tooltip {
-  position: fixed;
-  z-index: 10000;
-  max-width: 260px;
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-  color: #e2e8f0;
-  padding: 12px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.1);
-
-  animation: slideUp 0.35s ease;
-}
-
-/* =========================
-   TOOLTIP TEXT
-========================= */
-.guide-step {
-  font-size: 12px;
-  color: #38bdf8;
-  margin-bottom: 6px;
-}
-
-.guide-text {
-  font-size: 14px;
-  margin-bottom: 10px;
-  line-height: 1.4;
-}
-
-/* =========================
-   BUTTON STYLE
-========================= */
-.guide-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px;
-}
-
-.guide-btn {
-  flex: 1;
-  padding: 6px;
-  border-radius: 8px;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.guide-next {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: white;
-}
-
-.guide-end {
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
-  color: white;
-}
-
-.guide-btn:hover {
-  transform: scale(1.05);
-  opacity: 0.9;
-}
-
-/* =========================
-   ANIMATIONS
-========================= */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* TRANSITION STEP */
-.guide-fade-out {
-  opacity: 0;
-  transform: scale(0.95);
-  transition: 0.25s;
-}
-.guide-tooltip.finish {
-  text-align: center;
-  font-size: 15px;
-  animation: zoomIn 0.3s ease;
-}
-
-@keyframes zoomIn {
-  from {
-    transform: translate(-50%, -50%) scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: translate(-50%, -50%) scale(1.05);
-    opacity: 1;
-  }
-}
-#playerCard {
-  width: 100%;
-}
-#profileBtn:hover {
-  transform: scale(1.02);
-  transition: 0.2s;
-}
-
-#islandHeaderLayer {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
-  z-index: 30;
-  pointer-events: none;
-}
-
-#zoneHeader {
-  margin: 0;
-}
-
-.world-map-scroller {
-  position: absolute;
-  top: 90px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-
-  z-index: 1;
-}
-
-/* area scroll mengikuti ukuran map yang sudah diskalakan */
-.world-map-scroller::after {
-  content: "";
-  display: block;
-  width: var(--scaled-map-width, 100%);
-  height: var(--scaled-map-height, 100%);
-}
-
-#worldMap {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-.world-map-scroller::-webkit-scrollbar {
-  height: 10px;
-}
-
-.world-map-scroller::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.35);
-  border-radius: 999px;
-}
-
-.world-map-scroller::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.08);
-}
-
-/* Tombol back di header */
-.back-btn {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  width: 60px; /* sesuai small-btn */
-  z-index: 40; /* lebih tinggi dari zoneHeader (30) dan worldMap (1) */
-  pointer-events: auto; /* pastikan bisa diklik */
-}
-
-.info-btn {
-  width: 100%;
-  margin-top: 12px;
-  padding: 14px;
-  border: none;
-  border-radius: 14px;
-  background: #1e293b;
-  color: white;
-  font-weight: bold;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.info-btn:hover {
-  transform: scale(1.02);
-  background: #334155;
-}
-
-.game-info-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 20px;
-}
-
-.game-info-box {
-  background: #0f172a;
-  color: white;
-  width: 100%;
-  max-width: 520px;
-  max-height: 80vh;
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 0 25px rgba(0,0,0,0.4);
-  animation: popupFade 0.25s ease;
-
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* penting */
-}
-
-.game-info-box h2 {
-  color: #facc15;
-  margin-bottom: 12px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.game-info-content {
-  flex: 1;
-  overflow-y: auto;   /* ini yang bikin teks bisa discroll */
-  overflow-x: hidden;
-  padding-right: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: #38bdf8 rgba(255,255,255,0.12);
-}
-
-.game-info-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.game-info-content::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.08);
-  border-radius: 999px;
-}
-
-.game-info-content::-webkit-scrollbar-thumb {
-  background: #38bdf8;
-  border-radius: 999px;
-}
-
-.game-info-content::-webkit-scrollbar-thumb:hover {
-  background: #0ea5e9;
-}
-
-.game-info-box h3 {
-  margin-top: 16px;
-  margin-bottom: 8px;
-  color: #60a5fa;
-}
-
-.game-info-box ul {
-  padding-left: 20px;
-  line-height: 1.6;
-}
-
-.close-info-btn {
-  margin-top: 16px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  background: #2563eb;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.close-info-btn:hover {
-  background: #1d4ed8;
-}
-
-.hidden {
-  display: none;
-}
-
-@keyframes popupFade {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.game-info-box::-webkit-scrollbar {
-  width: 8px;
-}
-
-.game-info-box::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.08);
-  border-radius: 999px;
-}
-
-.game-info-box::-webkit-scrollbar-thumb {
-  background: #38bdf8;
-  border-radius: 999px;
-}
-
-.game-info-box::-webkit-scrollbar-thumb:hover {
-  background: #0ea5e9;
-}
-.game-info-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 20px;
-}
-
-.close-info-btn {
-  margin-top: 18px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  background: #2563eb;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  position: sticky;
-  bottom: 0;
-}
-/* =========================
-   BATTLE SCREEN WRAPPER
-========================= */
-#battleScreenWrap {
-  width: 100%;
-  height: 100dvh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  box-sizing: border-box;
-  padding-bottom: 24px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: #38bdf8 rgba(255,255,255,0.12);
-}
-
-#battleScreenWrap::-webkit-scrollbar {
-  width: 8px;
-}
-
-#battleScreenWrap::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.08);
-  border-radius: 999px;
-}
-
-#battleScreenWrap::-webkit-scrollbar-thumb {
-  background: #38bdf8;
-  border-radius: 999px;
-}
-
-#battleScreenWrap::-webkit-scrollbar-thumb:hover {
-  background: #0ea5e9;
-}
-
-#battleScreen {
-  box-sizing: border-box;
-  padding-bottom: 80px;
+  touch-action: pan-x pan-y;
 }
 
 #app {
@@ -1110,19 +58,928 @@ html, body {
   background: #0ea5e9;
 }
 
-@media (min-width: 1024px) {
-  #battleScreenWrap {
-    padding-top: 10px;
-    padding-bottom: 20px;
+.container {
+  max-width: 480px;
+  margin: auto;
+  padding: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* =========================================================
+   02. GLOBAL ANIMATIONS
+========================================================= */
+.fade-in {
+  animation: fade 0.3s ease-in;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
 
-  #battleScreen {
-    max-width: 900px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpPanel {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpTooltip {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+  }
+
+  to {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes popupFade {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =========================================================
+   03. BUTTON SYSTEM
+========================================================= */
+.btn {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.btn-blue {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-gray {
+  background: #4b5563;
+  color: white;
+}
+
+.btn-green {
+  background: #16a34a;
+  color: white;
+}
+
+.btn-purple {
+  background: #7c3aed;
+  color: white;
+}
+
+.btn-red {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-yellow {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+  filter: brightness(1.1);
+}
+
+.btn:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.small-btn {
+  width: 60px;
+}
+
+.back-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 60px;
+  z-index: 40;
+  pointer-events: auto;
+}
+
+.info-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: #1e293b;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.info-btn:hover {
+  transform: scale(1.02);
+  background: #334155;
+}
+
+.close-info-btn {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  margin-top: 18px;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.close-info-btn:hover {
+  background: #1d4ed8;
+}
+
+/* =========================================================
+   04. PANEL, CARD, AND GENERAL COMPONENTS
+========================================================= */
+.glass-panel {
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.category-card {
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+  text-align: center;
+  transition: 0.2s;
+}
+
+.category-card:hover {
+  transform: scale(1.05);
+  background: rgba(255,255,255,0.1);
+}
+
+.category-card.locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.game-input {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  background: #1e293b;
+  color: white;
+}
+
+.enemy-card {
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+  text-align: center;
+}
+
+#playerCard {
+  width: 100%;
+}
+
+#profileBtn:hover {
+  transform: scale(1.02);
+  transition: 0.2s;
+}
+
+/* =========================================================
+   05. HP AND PROGRESS SYSTEM
+========================================================= */
+.hp-bar {
+  height: 12px;
+  margin-top: 5px;
+  border-radius: 10px;
+  background: #1e293b;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  background: linear-gradient(to right, #22c55e, #16a34a);
+}
+
+.progress-box {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  left: 16px;
+}
+
+.progress-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.2);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, #22c55e, #16a34a);
+}
+
+.progress-text {
+  margin-top: 4px;
+  color: white;
+  font-size: 12px;
+}
+
+.hp-ring {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 50%;
+  background: conic-gradient(
+    #22c55e calc(var(--hp)*1%),
+    rgba(255,255,255,0.05) 0%
+  );
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+}
+
+.hp-ring.enemy {
+  background: conic-gradient(
+    #ef4444 calc(var(--hp)*1%),
+    rgba(255,255,255,0.05) 0%
+  );
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+.hp-text {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.6);
+  font-size: 12px;
+  font-weight: bold;
+  transform: translateX(-50%);
+}
+
+/* =========================================================
+   06. MAP AND WORLD SYSTEM
+========================================================= */
+#mapWrapper {
+  height: calc(100dvh - 100px);
+}
+
+#islandWrapper {
+  height: 100dvh;
+}
+
+.map-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+.map-full {
+  position: absolute;
+  width: 2000px;
+  height: 1200px;
+}
+
+.map-full:active {
+  cursor: grabbing;
+}
+
+.map-full img {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.map-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+}
+
+.map-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: rgba(0,0,0,0.6);
+}
+
+#islandHeaderLayer {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  left: 12px;
+  z-index: 30;
+  pointer-events: none;
+}
+
+#zoneHeader {
+  margin: 0;
+}
+
+.island {
+  position: absolute;
+  width: 100px;
+  cursor: pointer;
+  transition: 0.3s;
+  pointer-events: auto;
+}
+
+.island:hover {
+  transform: scale(1.1);
+}
+
+.island-btn {
+  position: absolute;
+  padding: 14px 20px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.1);
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: 0.8s;
+}
+
+.island-btn:hover {
+  transform: scale(1.1);
+  background: rgba(0,0,0,0.7);
+}
+
+#worldMap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #020617;
+}
+
+.world-map-scroller {
+  position: absolute;
+  top: 90px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #020617;
+  -webkit-overflow-scrolling: touch;
+}
+
+.world-map-scroller::after {
+  content: "";
+  display: block;
+  width: var(--scaled-map-width, 100%);
+  height: var(--scaled-map-height, 100%);
+}
+
+.world-map-scroller::-webkit-scrollbar {
+  height: 10px;
+}
+
+.world-map-scroller::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+}
+
+.world-map-scroller::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.35);
+  border-radius: 999px;
+}
+
+.world-scroll {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  gap: 24px;
+  padding: 20px 40px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 40px;
+}
+
+.world-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.world-card {
+  position: relative;
+  min-width: 320px;
+  max-width: 320px;
+  height: 220px;
+  flex-shrink: 0;
+  border-radius: 24px;
+  background: #1e293b;
+  overflow: hidden;
+  scroll-snap-align: center;
+}
+
+.world-card:hover {
+  transform: scale(1.3);
+}
+
+.world-card:active {
+  transform: scale(0.95);
+}
+
+.world-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.world-title {
+  position: absolute;
+  bottom: 60px;
+  left: 15px;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 0 0 10px black;
+}
+
+.locked-world {
+  position: relative;
+  opacity: 0.55;
+  filter: grayscale(1);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.locked-world:hover {
+  transform: none !important;
+}
+
+.coming-soon-badge {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: linear-gradient(45deg, #facc15, #f97316);
+  color: black;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+
+/* =========================================================
+   07. STAGE NODE SYSTEM
+========================================================= */
+.node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  border: 2px solid rgba(255,255,255,0.8);
+  border-radius: 50%;
+  outline: 3px solid rgba(255,255,255,0.2);
+  background: linear-gradient(145deg, #3b82f6, #1e40af);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow:
+    0 4px 15px rgba(59,130,246,0.6),
+    inset -4px -4px 10px rgba(0,0,0,0.3),
+    inset 4px 4px 10px rgba(255,255,255,0.4);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.node:hover {
+  transform: scale(1.15) translateY(-5px);
+  border-color: #fff;
+  box-shadow:
+    0 10px 25px rgba(59,130,246,0.9),
+    inset -4px -4px 10px rgba(0,0,0,0.3),
+    inset 4px 4px 10px rgba(255,255,255,0.6);
+}
+
+.stageNode {
+  pointer-events: none;
+}
+
+.normal-node {
+  /* ukuran diatur dari JavaScript */
+}
+
+.mini-node {
+  background: linear-gradient(145deg, #f97316, #b45309);
+  box-shadow: 0 0 14px orange;
+}
+
+.boss-node {
+  background: radial-gradient(circle, #ef4444, #7f1d1d);
+  box-shadow: 0 0 20px red;
+}
+
+.path-line {
+  position: absolute;
+  height: 7px;
+  border-radius: 9px;
+  background: repeating-linear-gradient(
+    to right,
+    #facc15,
+    #facc15 16px,
+    transparent 12px,
+    transparent 20px
+  );
+  transform-origin: left center;
+}
+
+.node.completed {
+  background: linear-gradient(145deg, #22c55e, #15803d);
+  box-shadow: 0 0 10px lime;
+}
+
+.algebra-theme .node {
+  background: linear-gradient(145deg, #f97316, #7c2d12);
+  box-shadow: 0 0 12px orange;
+}
+
+.algebra-theme .mini-node {
+  background: linear-gradient(145deg, #ef4444, #7f1d1d);
+}
+
+.algebra-theme .boss-node {
+  background: radial-gradient(circle, #dc2626, #450a0a);
+}
+
+.geometry-theme .node {
+  background: linear-gradient(145deg, #60a5fa, #1e3a8a);
+  box-shadow: 0 0 12px #60a5fa;
+}
+
+.geometry-theme .mini-node {
+  background: linear-gradient(145deg, #22d3ee, #0e7490);
+  box-shadow: 0 0 14px cyan;
+}
+
+.geometry-theme .boss-node {
+  background: radial-gradient(circle, #38bdf8, #0c4a6e);
+  box-shadow: 0 0 20px #38bdf8;
+}
+
+.data-theme .node {
+  background: linear-gradient(145deg, #34d399, #065f46);
+  box-shadow: 0 0 12px #34d399;
+}
+
+.data-theme .mini-node {
+  background: linear-gradient(145deg, #facc15, #a16207);
+  box-shadow: 0 0 14px #facc15;
+}
+
+.data-theme .boss-node {
+  background: radial-gradient(circle, #10b981, #022c22);
+  box-shadow: 0 0 20px #10b981;
+}
+
+.locked-node {
+  opacity: 0.45;
+  filter: grayscale(1);
+  cursor: not-allowed;
+  pointer-events: none;
+  background: #334155 !important;
+  border: 2px solid #64748b !important;
+  color: #cbd5e1 !important;
+  box-shadow: none;
+}
+
+/* =========================================================
+   08. MATERI OVERLAY
+========================================================= */
+.bottom-bar {
+  position: absolute;
+  right: 15px;
+  bottom: 15px;
+  left: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.materi-btn {
+  flex: 1;
+  border-radius: 999px;
+}
+
+.materi-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0,0,0,0.7);
+}
+
+.materi-content {
+  width: 100%;
+  max-height: 80%;
+  padding: 15px;
+  border-radius: 20px 20px 0 0;
+  background: #020617;
+  animation: slideUpPanel 0.3s ease;
+}
+
+.materi-header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.materi-body {
+  overflow-y: auto;
+}
+
+/* =========================================================
+   09. BATTLE SCREEN
+========================================================= */
+#battleScreenWrap {
+  width: 100%;
+  height: 100dvh;
+  box-sizing: border-box;
+  padding-bottom: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #38bdf8 rgba(255,255,255,0.12);
+}
+
+#battleScreenWrap::-webkit-scrollbar {
+  width: 8px;
+}
+
+#battleScreenWrap::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+}
+
+#battleScreenWrap::-webkit-scrollbar-thumb {
+  background: #38bdf8;
+  border-radius: 999px;
+}
+
+#battleScreenWrap::-webkit-scrollbar-thumb:hover {
+  background: #0ea5e9;
+}
+
+#battleScreen {
+  box-sizing: border-box;
+  padding-bottom: 80px;
+}
+
+.battle-arena {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.battle-log {
+  height: 120px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #020617;
+  overflow-y: auto;
+  font-size: 0.85rem;
+}
+
+.fighter {
+  text-align: center;
+}
+
+.avatar {
+  position: relative;
+  width: 110px;
+  height: 110px;
+}
+
+.avatar img {
+  width: 100%;
+  border-radius: 50%;
+}
+
+.avatar-inner {
+  position: absolute;
+  inset: 8px;
+  z-index: 2;
+  border-radius: 50%;
+  background: #020617;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+.avatar-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vs-text {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.action-bar {
+  display: flex;
+  gap: 10px;
+}
+
+.projectile {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  font-weight: bold;
+  transition: 0.6s;
+}
+
+.shape-circle {
+  border-radius: 50%;
+  background: red;
+}
+
+.shape-square {
+  background: blue;
+}
+
+.shape-triangle {
+  width: 0;
+  height: 0;
+  border-right: 20px solid transparent;
+  border-bottom: 40px solid orange;
+  border-left: 20px solid transparent;
+}
+
+.shape-pentagon {
+  background: purple;
+  clip-path: polygon(50% 0%,100% 38%,82% 100%,18% 100%,0% 38%);
+}
+
+/* =========================================================
+   10. GUIDE OVERLAY AND TOOLTIP
+========================================================= */
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0,0,0,0.7);
+  animation: fadeIn 0.3s ease;
+}
+
+.guide-highlight {
+  position: fixed;
+  z-index: 9999;
+  border: 3px solid yellow;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(255,255,0,0.5);
+  transition: all 0.4s ease;
+}
+
+.guide-tooltip {
+  position: fixed;
+  z-index: 10000;
+  max-width: 260px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #e2e8f0;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+  animation: slideUpTooltip 0.35s ease;
+}
+
+.guide-step {
+  margin-bottom: 6px;
+  color: #38bdf8;
+  font-size: 12px;
+}
+
+.guide-text {
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.guide-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.guide-btn {
+  flex: 1;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.guide-btn:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.guide-next {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
 }
 
 .guide-back {
   background: linear-gradient(135deg, #64748b, #475569);
+  color: white;
+}
+
+.guide-end {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
   color: white;
 }
 
@@ -1132,36 +989,126 @@ html, body {
   transform: none !important;
 }
 
-/* =========================
-   TUTORIAL SCREEN
-========================= */
+.guide-fade-out {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: 0.25s;
+}
+
+.guide-tooltip.finish {
+  text-align: center;
+  font-size: 15px;
+  animation: zoomIn 0.3s ease;
+}
+
+/* =========================================================
+   11. GAME INFO MODAL
+========================================================= */
+.game-info-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: rgba(0,0,0,0.7);
+}
+
+.game-info-box {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  padding: 24px;
+  border-radius: 18px;
+  background: #0f172a;
+  color: white;
+  overflow: hidden;
+  box-shadow: 0 0 25px rgba(0,0,0,0.4);
+  animation: popupFade 0.25s ease;
+}
+
+.game-info-box h2 {
+  margin-bottom: 12px;
+  color: #facc15;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.game-info-box h3 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  color: #60a5fa;
+}
+
+.game-info-box ul {
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+.game-info-box::-webkit-scrollbar,
+.game-info-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.game-info-box::-webkit-scrollbar-track,
+.game-info-content::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+}
+
+.game-info-box::-webkit-scrollbar-thumb,
+.game-info-content::-webkit-scrollbar-thumb {
+  background: #38bdf8;
+  border-radius: 999px;
+}
+
+.game-info-box::-webkit-scrollbar-thumb:hover,
+.game-info-content::-webkit-scrollbar-thumb:hover {
+  background: #0ea5e9;
+}
+
+.game-info-content {
+  flex: 1;
+  padding-right: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #38bdf8 rgba(255,255,255,0.12);
+}
+
+/* =========================================================
+   12. TUTORIAL SCREEN
+========================================================= */
 .tutorial-shell {
   padding-bottom: 40px;
 }
 
 .tutorial-hero {
+  border: 1px solid rgba(96, 165, 250, 0.18);
   background:
     linear-gradient(180deg, rgba(37, 99, 235, 0.18), rgba(15, 23, 42, 0.65)),
     rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(96, 165, 250, 0.18);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
 }
 
 .tutorial-main-title {
   margin: 0 0 8px 0;
-  text-align: center;
+  color: #f8fafc;
   font-size: 28px;
   font-weight: 700;
-  color: #f8fafc;
+  text-align: center;
   letter-spacing: 0.2px;
 }
 
 .tutorial-main-subtitle {
   margin: 0;
-  text-align: center;
   color: #cbd5e1;
   font-size: 14px;
   line-height: 1.6;
+  text-align: center;
 }
 
 .tutorial-stack {
@@ -1173,11 +1120,12 @@ html, body {
 .tutorial-accordion {
   margin-bottom: 0;
   padding: 0;
-  overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: inherit;
   background:
     linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)),
     rgba(15, 23, 42, 0.72);
+  overflow: hidden;
   box-shadow: 0 8px 20px rgba(0,0,0,0.16);
   transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1193,13 +1141,13 @@ html, body {
 }
 
 .tutorial-summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 18px 18px 16px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  padding: 18px 18px 16px 18px;
+  list-style: none;
+  cursor: pointer;
   user-select: none;
 }
 
@@ -1210,21 +1158,21 @@ html, body {
 .tutorial-summary::after {
   content: "Buka";
   min-width: 58px;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: #dbeafe;
-  background: rgba(37, 99, 235, 0.18);
+  padding: 6px 10px;
   border: 1px solid rgba(96, 165, 250, 0.28);
   border-radius: 999px;
-  padding: 6px 10px;
+  background: rgba(37, 99, 235, 0.18);
+  color: #dbeafe;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
   transition: all 0.2s ease;
 }
 
 .tutorial-accordion[open] > .tutorial-summary::after {
   content: "Tutup";
-  background: rgba(59, 130, 246, 0.24);
   border-color: rgba(96, 165, 250, 0.4);
+  background: rgba(59, 130, 246, 0.24);
 }
 
 .tutorial-summary-text {
@@ -1232,28 +1180,28 @@ html, body {
 }
 
 .tutorial-section-label {
+  margin-bottom: 6px;
+  color: #93c5fd;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #93c5fd;
-  margin-bottom: 6px;
 }
 
 .tutorial-section-title {
+  color: #f8fafc;
   font-size: 18px;
   font-weight: 700;
   line-height: 1.4;
-  color: #f8fafc;
 }
 
 .tutorial-body {
-  border-top: 1px solid rgba(255,255,255,0.08);
   padding: 16px 18px 18px 18px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(2, 6, 23, 0.32);
   color: #d1d5db;
   font-size: 14px;
   line-height: 1.8;
-  background: rgba(2, 6, 23, 0.32);
 }
 
 .tutorial-body p {
@@ -1282,33 +1230,33 @@ html, body {
 .tutorial-subtitle {
   margin-top: 14px;
   margin-bottom: 8px;
+  color: #bfdbfe;
   font-size: 14px;
   font-weight: 700;
-  color: #bfdbfe;
 }
 
 .tutorial-note {
   margin-top: 14px;
   padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 12px;
   background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.14);
   color: #cbd5e1;
 }
 
 .tutorial-example-box {
   margin-top: 14px;
   padding: 14px;
+  border: 1px solid rgba(96, 165, 250, 0.14);
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(96, 165, 250, 0.14);
 }
 
 .tutorial-example-title {
   margin-bottom: 8px;
+  color: #e2e8f0;
   font-size: 13px;
   font-weight: 700;
-  color: #e2e8f0;
 }
 
 .tutorial-world-grid {
@@ -1320,9 +1268,9 @@ html, body {
 
 .tutorial-world-card {
   padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .tutorial-world-card-muted {
@@ -1330,16 +1278,26 @@ html, body {
 }
 
 .tutorial-world-name {
+  margin-bottom: 6px;
+  color: #f8fafc;
   font-size: 15px;
   font-weight: 700;
-  color: #f8fafc;
-  margin-bottom: 6px;
 }
 
 .tutorial-world-desc {
+  color: #cbd5e1;
   font-size: 13px;
   line-height: 1.7;
-  color: #cbd5e1;
+}
+
+/* =========================================================
+   13. RESPONSIVE RULES
+========================================================= */
+@media (max-width: 600px) {
+  .world-card {
+    min-width: 260px;
+    height: 180px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1370,21 +1328,13 @@ html, body {
   }
 }
 
-.locked-node {
-  opacity: 0.45;
-  filter: grayscale(1);
-  cursor: not-allowed;
-  background: #334155 !important;
-  border: 2px solid #64748b !important;
-  color: #cbd5e1 !important;
-}
+@media (min-width: 1024px) {
+  #battleScreenWrap {
+    padding-top: 10px;
+    padding-bottom: 20px;
+  }
 
-.locked-world {
-  opacity: 0.55;
-  filter: grayscale(1);
-  cursor: not-allowed;
-}
-
-.locked-world:hover {
-  transform: none !important;
+  #battleScreen {
+    max-width: 900px;
+  }
 }
