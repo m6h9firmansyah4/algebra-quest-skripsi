@@ -8,7 +8,7 @@
 // ======================================================
 import { auth, provider, db } from "./firebase-config.js";
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { gameState, defaultPlayerStats } from "./engine/gameState.js";
 import "./screens/profile.js";
 import "./engine/guideSystem.js";
@@ -57,6 +57,18 @@ const defaultSettings = {
   music: true,
   theme: "default",
   musicTrack: "default"
+};
+
+const defaultScoreStats = {
+  points: 0,
+  totalScore: 0,
+  bestStreak: 0,
+  totalAnswered: 0,
+  totalCorrect: 0,
+  totalWrong: 0,
+  totalBasePoints: 0,
+  totalSpeedBonus: 0,
+  totalStreakBonus: 0
 };
 
 // ======================================================
@@ -137,15 +149,6 @@ window.sfx = {
 window.sfx.init();
 
 document.addEventListener("click", () => {
-  GuideSystem.init();
-
-  if (document.getElementById("guideBtn")) return;
-
-  if (!window.gameState.hasSeenGuide) {
-    GuideSystem.start(GuideSystem.getStepsByScreen());
-    window.gameState.hasSeenGuide = true;
-  }
-
   if (window.gameState.settings.music) {
     window.sfx.playMusic(
       window.gameState.screen === "battle" ? "battle" : "theme"
@@ -191,6 +194,17 @@ function safeLoadUserData(dbStats) {
     exp: dbStats.exp ?? defaultPlayerStats.exp,
     expToNext: dbStats.expToNext ?? defaultPlayerStats.expToNext,
     level: dbStats.level ?? defaultPlayerStats.level,
+
+    // Score fallback
+    points: dbStats.points ?? dbStats.totalScore ?? defaultPlayerStats.points ?? 0,
+    totalScore: dbStats.totalScore ?? dbStats.points ?? defaultPlayerStats.totalScore ?? 0,
+    bestStreak: dbStats.bestStreak ?? defaultPlayerStats.bestStreak ?? 0,
+    totalAnswered: dbStats.totalAnswered ?? defaultPlayerStats.totalAnswered ?? 0,
+    totalCorrect: dbStats.totalCorrect ?? defaultPlayerStats.totalCorrect ?? 0,
+    totalWrong: dbStats.totalWrong ?? defaultPlayerStats.totalWrong ?? 0,
+    totalBasePoints: dbStats.totalBasePoints ?? defaultPlayerStats.totalBasePoints ?? 0,
+    totalSpeedBonus: dbStats.totalSpeedBonus ?? defaultPlayerStats.totalSpeedBonus ?? 0,
+    totalStreakBonus: dbStats.totalStreakBonus ?? defaultPlayerStats.totalStreakBonus ?? 0,
 
     // LifePoints fallback
     lifePoints: dbStats.lifePoints ?? 5,
@@ -294,7 +308,8 @@ window.handleLogin = async function() {
         lifePoints: 5,
         maxLifePoints: 5,
         lifePointRegenMs: 3 * 60 * 60 * 1000,
-        nextLifeAt: null
+        nextLifeAt: null,
+        ...defaultScoreStats
       };
 
       window.gameState.progress = cloneDefaultProgress();
@@ -327,14 +342,15 @@ window.handleLogout = async function() {
 // ======================================================
 
 // SAVE GAME
-window.saveProgress = async function(gs) {
+window.saveProgress = async function(gs, options = {}) {
+  const silent = options?.silent === true;
+
   if (!auth.currentUser) {
-    alert("Kamu belum login!");
+    if (!silent) alert("Kamu belum login!");
     return;
   }
 
   try {
-    // Update LifePoints sebelum data disimpan
     if (window.updateLifePoints) {
       window.updateLifePoints(gs);
     }
@@ -364,13 +380,18 @@ window.saveProgress = async function(gs) {
 
     await setDoc(userRef, saveData, { merge: true });
 
-    gs.feedback = "💾 Progress berhasil disimpan!";
-    window.render();
+    if (!silent) {
+      gs.feedback = "💾 Progress berhasil disimpan!";
+      window.render();
+    }
 
   } catch (e) {
     console.error("Gagal save:", e);
-    gs.feedback = "❌ Gagal menyimpan progress";
-    window.render();
+
+    if (!silent) {
+      gs.feedback = "❌ Gagal menyimpan progress";
+      window.render();
+    }
   }
 };
 
@@ -387,7 +408,9 @@ window.resetProgress = async function() {
     lifePoints: 5,
     maxLifePoints: 5,
     lifePointRegenMs: 3 * 60 * 60 * 1000,
-    nextLifeAt: null
+    nextLifeAt: null,
+
+    ...defaultScoreStats
   };
 
   gs.player = resetPlayer;
@@ -427,6 +450,183 @@ window.resetProgress = async function() {
   window.render();
 };
 
+// ======================================================
+// 8. LEADERBOARD SYSTEM
+// ======================================================
+window.leaderboardState = {
+  loading: false,
+  loaded: false,
+  rows: [],
+  error: ""
+};
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function getCompletedStageTotal(progress = {}) {
+  return Object.values(progress || {}).reduce((total, worldProgress) => {
+    return total + Number(
+      worldProgress?.completedStage ??
+      worldProgress?.done ??
+      0
+    );
+  }, 0);
+}
+
+window.loadLeaderboard = async function(force = false) {
+  const state = window.leaderboardState;
+
+  if (state.loading) return;
+  if (state.loaded && !force) return;
+
+  state.loading = true;
+  state.error = "";
+
+  try {
+    const snap = await getDocs(collection(db, "users"));
+
+    const rows = snap.docs.map(docSnap => {
+      const data = docSnap.data() || {};
+      const stats = data.stats || {};
+      const progress = data.progress || {};
+
+      return {
+        uid: docSnap.id,
+        username: data.username || stats.name || "Player",
+        title: data.title || "Pemula",
+        points: Number(stats.points ?? stats.totalScore ?? 0),
+        level: Number(stats.level ?? 1),
+        bestStreak: Number(stats.bestStreak ?? 0),
+        totalCorrect: Number(stats.totalCorrect ?? 0),
+        completedStage: getCompletedStageTotal(progress)
+      };
+    });
+
+    state.rows = rows
+      .sort((a, b) =>
+        b.points - a.points ||
+        b.completedStage - a.completedStage ||
+        b.level - a.level ||
+        b.bestStreak - a.bestStreak
+      )
+      .map((row, index) => ({
+        ...row,
+        rank: index + 1
+      }));
+
+    state.loaded = true;
+
+  } catch (error) {
+    console.error("Gagal mengambil leaderboard:", error);
+    state.error = "Leaderboard belum bisa dimuat. Pastikan Firestore Rules mengizinkan user login membaca koleksi users.";
+  } finally {
+    state.loading = false;
+    window.render();
+  }
+};
+
+window.renderLeaderboardScreen = function() {
+  const state = window.leaderboardState;
+  const currentUid = auth.currentUser?.uid;
+
+  if (!state.loaded && !state.loading) {
+    setTimeout(() => window.loadLeaderboard(), 0);
+  }
+
+  const rowsHtml = state.rows.length
+    ? state.rows.map(row => {
+      const isCurrentUser = row.uid === currentUid;
+      const medal =
+        row.rank === 1 ? "🥇" :
+        row.rank === 2 ? "🥈" :
+        row.rank === 3 ? "🥉" :
+        `#${row.rank}`;
+
+      return `
+        <div class="p-3 rounded-xl border ${
+          isCurrentUser
+            ? "border-yellow-400 bg-yellow-400/10"
+            : "border-slate-700 bg-slate-900/50"
+        }">
+          <div class="flex justify-between gap-3 items-center">
+
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="text-xl font-bold w-10 text-center">
+                ${medal}
+              </div>
+
+              <div class="min-w-0">
+                <div class="font-bold text-yellow-300 truncate">
+                  ${escapeHtml(row.username)}
+                  ${isCurrentUser ? "<span class='text-xs text-green-300'>(Kamu)</span>" : ""}
+                </div>
+
+                <div class="text-xs text-gray-400">
+                  ${escapeHtml(row.title)} • Lv.${row.level} • Stage selesai: ${row.completedStage}
+                </div>
+              </div>
+            </div>
+
+            <div class="text-right shrink-0">
+              <div class="font-bold text-yellow-400">
+                💎 ${row.points}
+              </div>
+              <div class="text-xs text-gray-400">
+                🔥 Best ${row.bestStreak} • ✅ ${row.totalCorrect}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+    }).join("")
+    : `
+      <div class="text-center text-gray-400 p-6">
+        Belum ada data peringkat. Mainkan battle dan simpan progress terlebih dahulu.
+      </div>
+    `;
+
+  return `
+    <div class="p-6 max-w-2xl mx-auto fade-in">
+
+      <div class="glass-panel mb-4 p-4 text-center">
+        <h1 class="text-2xl font-bold text-yellow-400">
+          🏆 Leaderboard
+        </h1>
+        <p class="text-sm text-gray-300 mt-1">
+          Peringkat siswa berdasarkan total poin Algebra Quest.
+        </p>
+      </div>
+
+      <div class="flex gap-2 mb-4">
+        <button onclick="goTo('home')" class="btn btn-gray flex-1">
+          ⬅️ Home
+        </button>
+
+        <button onclick="loadLeaderboard(true)" class="btn btn-blue flex-1">
+          🔄 Refresh
+        </button>
+      </div>
+
+      <div class="glass-panel p-4">
+        ${
+          state.loading
+            ? `<div class="text-center text-gray-300 p-6">Memuat leaderboard...</div>`
+            : state.error
+              ? `<div class="text-center text-red-300 p-6">${escapeHtml(state.error)}</div>`
+              : `<div class="space-y-3">${rowsHtml}</div>`
+        }
+      </div>
+
+    </div>
+  `;
+};
 
 // ======================================================
 // 9. NAVIGATION & THEME
@@ -436,13 +636,17 @@ window.resetProgress = async function() {
 window.goTo = function(screen) {
   window.gameState.screen = screen;
 
-  if (screen === "stage") {
-    window.gameState.selectedWorld = null;
-    window.gameState.selectedArea = null;
-    window.gameState.selectedStage = null;
-    window.gameState.quest = null;
-    window.gameState.learningPhase = null;
-  }
+    if (screen === "leaderboard" && window.leaderboardState) {
+        window.leaderboardState.loaded = false;
+      }
+
+    if (screen === "stage") {
+        window.gameState.selectedWorld = null;
+        window.gameState.selectedArea = null;
+        window.gameState.selectedStage = null;
+        window.gameState.quest = null;
+        window.gameState.learningPhase = null;
+      }
 
   window.render();
 };
@@ -605,7 +809,8 @@ onAuthStateChanged(auth, async (user) => {
         lifePoints: 5,
         maxLifePoints: 5,
         lifePointRegenMs: 3 * 60 * 60 * 1000,
-        nextLifeAt: null
+        nextLifeAt: null,
+        ...defaultScoreStats
       };
 
       window.gameState.progress = cloneDefaultProgress();
@@ -651,6 +856,11 @@ window.render = function() {
       case 'achievement':
         html = window.renderAchievementScreen();
         break;
+      case 'leaderboard':
+        html = window.renderLeaderboardScreen
+        ? window.renderLeaderboardScreen()
+        : "Loading Leaderboard...";
+        break;
       case 'setting':
         html = window.renderSettingScreen();
         break;
@@ -682,4 +892,8 @@ window.render = function() {
   }
 
   app.innerHTML = html;
+
+  setTimeout(() => {
+      window.GuideSystem?.init();
+    }, 0);
 };

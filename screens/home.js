@@ -16,6 +16,9 @@ window.renderHomeScreen = function () {
     : lifePoints >= maxLifePoints
       ? "Penuh"
       : "Memulihkan...";
+  
+  const points = gs.player.points ?? gs.player.totalScore ?? 0;
+  const bestStreak = gs.player.bestStreak ?? 0;
 
   return `
 
@@ -54,6 +57,19 @@ window.renderHomeScreen = function () {
           ⭐ ${gs.player.exp}/${gs.player.expToNext}
         </div>
 
+      </div>
+
+      <!-- SCORE SUMMARY -->
+      <div id="scoreSummary" class="grid grid-cols-2 gap-2 mt-3">
+        <div class="p-2 rounded-lg bg-slate-900/60 border border-yellow-400/30 text-center">
+          <div class="text-xs text-gray-400">Total Poin</div>
+          <div class="font-bold text-yellow-400">💎 ${points}</div>
+        </div>
+
+        <div class="p-2 rounded-lg bg-slate-900/60 border border-orange-400/30 text-center">
+          <div class="text-xs text-gray-400">Best Streak</div>
+          <div class="font-bold text-orange-300">🔥 ${bestStreak}</div>
+        </div>
       </div>
 
       <!-- LIFEPOINTS -->
@@ -107,6 +123,10 @@ window.renderHomeScreen = function () {
 
       <button id="achievementBtn" onclick="goTo('achievement')" class="btn btn-purple">
         🏆 Achievement
+      </button>
+
+      <button id="leaderboardBtn" onclick="goTo('leaderboard')" class="btn btn-purple">
+        🥇 Leaderboard
       </button>
 
       <button id="settingBtn" onclick="goTo('setting')" class="btn btn-gray">

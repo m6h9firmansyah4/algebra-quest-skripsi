@@ -127,6 +127,30 @@ window.renderBattleScreen = function() {
         <div id="battleEnemyName" class="font-bold text-red-400">⚔️ VS ${e.name}</div>
       </div>
 
+      <!-- SCORE BAR -->
+        <div id="battleScoreBar" class="glass-panel mb-4 p-3 grid grid-cols-3 gap-2 text-center text-sm">
+          <div>
+            <div class="text-xs text-gray-400">Total Poin</div>
+            <div class="font-bold text-yellow-400">
+              💎 ${p.points ?? p.totalScore ?? 0}
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs text-gray-400">Poin Battle</div>
+            <div class="font-bold text-green-300">
+              +${gs.battlePoints ?? 0}
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs text-gray-400">Streak</div>
+            <div class="font-bold text-orange-300">
+              🔥 ${gs.streak ?? 0}
+            </div>
+          </div>
+        </div>
+
       <!-- ARENA -->
       <div id="battleArena" class="battle-arena">
 
@@ -551,10 +575,17 @@ window.startBattle = function(world, area, stage) {
     gs.currentQuestion = adaptQuestion(rawQ);
   }
 
-  gs.userAnswer = "";
-  gs.feedback = "";
-  gs.streak = 0;
-  gs.battleLog = [];
+    gs.userAnswer = "";
+    gs.feedback = "";
+    gs.streak = 0;
+
+    gs.battlePoints = 0;
+    gs.battleCorrect = 0;
+    gs.battleWrong = 0;
+
+    gs.battleLog = [];
+
+    ensurePointStats(gs);
 
   gs.screen = "battle";
 
@@ -618,10 +649,23 @@ window.checkAnswer = function() {
 
     gs.enemy.hp = Math.max(0, gs.enemy.hp - damage);
 
+    const point = awardCorrectAnswerPoints(gs);
+
     spawnDamage("circle", damage, "player");
 
-    gs.battleLog.push(`⚔️ Benar! Musuh kena ${damage} DMG.`);
-    gs.feedback = `<span class="text-green-400 font-bold">BENAR!</span> ${q.explanation}`;
+    gs.battleLog.push(`⚔️ Benar! Musuh kena ${damage} DMG. 💎 +${point.total} poin.`);
+
+    gs.feedback = `
+      <span class="text-green-400 font-bold">BENAR!</span> ${q.explanation}
+
+      <div class="mt-2 text-yellow-300 font-bold">
+        💎 +${point.total} Poin
+      </div>
+
+      <div class="text-xs text-gray-400 mt-1">
+        Dasar +${point.basePoints} • Kecepatan +${point.speedBonus} • Streak +${point.streakBonus}
+      </div>
+    `;
 
     if (gs.enemy.hp <= 0) {
       winBattle();
@@ -635,6 +679,7 @@ window.checkAnswer = function() {
   else {
     window.sfx.wrong();
 
+    registerWrongAnswer(gs);
     gs.streak = 0;
 
     let damage = calculateEnemyDamage(gs);
@@ -673,6 +718,7 @@ window.handleTimeOut = function() {
   // Kalau feedback sedang muncul, jangan hitung timeout lagi
   if (gs.feedback) return;
 
+  registerWrongAnswer(gs);
   gs.streak = 0;
 
   let damage = calculateEnemyDamage(gs);
@@ -701,6 +747,96 @@ window.handleTimeOut = function() {
 
   window.render();
 };
+
+// ======================================================
+// POINT SYSTEM
+// ======================================================
+const POINT_RULES = {
+  basePoints: 10,
+  maxSpeedBonus: 10,
+  streakBonusPerAnswer: 5,
+  maxStreakBonus: 25
+};
+
+function ensurePointStats(gs) {
+  const p = gs.player;
+
+  p.points = Number(p.points ?? p.totalScore ?? 0);
+  p.totalScore = Number(p.totalScore ?? p.points ?? 0);
+  p.bestStreak = Number(p.bestStreak ?? 0);
+  p.totalAnswered = Number(p.totalAnswered ?? 0);
+  p.totalCorrect = Number(p.totalCorrect ?? 0);
+  p.totalWrong = Number(p.totalWrong ?? 0);
+  p.totalBasePoints = Number(p.totalBasePoints ?? 0);
+  p.totalSpeedBonus = Number(p.totalSpeedBonus ?? 0);
+  p.totalStreakBonus = Number(p.totalStreakBonus ?? 0);
+
+  gs.battlePoints = Number(gs.battlePoints ?? 0);
+  gs.battleCorrect = Number(gs.battleCorrect ?? 0);
+  gs.battleWrong = Number(gs.battleWrong ?? 0);
+}
+
+function calculateSpeedBonus(gs) {
+  const duration = Number(gs.timer?.duration ?? 0);
+  const remaining = Number(gs.timer?.remaining ?? 0);
+
+  if (!duration || remaining <= 0) return 0;
+
+  const ratio = Math.max(0, Math.min(1, remaining / duration));
+  return Math.ceil(ratio * POINT_RULES.maxSpeedBonus);
+}
+
+function calculateAnswerPoints(gs) {
+  const streak = Number(gs.streak ?? 0);
+
+  const basePoints = POINT_RULES.basePoints;
+  const speedBonus = calculateSpeedBonus(gs);
+
+  const streakBonus = Math.min(
+    POINT_RULES.maxStreakBonus,
+    Math.max(0, (streak - 1) * POINT_RULES.streakBonusPerAnswer)
+  );
+
+  return {
+    basePoints,
+    speedBonus,
+    streakBonus,
+    total: basePoints + speedBonus + streakBonus
+  };
+}
+
+function awardCorrectAnswerPoints(gs) {
+  ensurePointStats(gs);
+
+  const point = calculateAnswerPoints(gs);
+  const p = gs.player;
+
+  p.points += point.total;
+  p.totalScore = p.points;
+
+  p.totalAnswered += 1;
+  p.totalCorrect += 1;
+
+  p.totalBasePoints += point.basePoints;
+  p.totalSpeedBonus += point.speedBonus;
+  p.totalStreakBonus += point.streakBonus;
+
+  p.bestStreak = Math.max(p.bestStreak, Number(gs.streak ?? 0));
+
+  gs.battlePoints += point.total;
+  gs.battleCorrect += 1;
+
+  return point;
+}
+
+function registerWrongAnswer(gs) {
+  ensurePointStats(gs);
+  
+  gs.player.totalAnswered += 1;
+  gs.player.totalWrong += 1;
+  gs.battleWrong += 1;
+}
+
 
 // ======================================================
 // 9. BATTLE NAVIGATION / RESULT
@@ -783,7 +919,7 @@ function getNextStageRoute(gs) {
   return null;
 }
 
-function winBattle() {
+async function winBattle() {
   window.sfx.win();
   const gs = window.gameState;
 
@@ -809,31 +945,37 @@ function winBattle() {
   }
 
   // Pesan Menang
-  gs.feedback = `
-    <div class="text-yellow-400 font-bold text-xl mb-2">VICTORY! 🏆</div>
-    <div class="mb-4">+${expGain} XP</div>
-    <div class="text-3xl animate-bounce mb-2">🎉</div>
-
-    ${nextStage ? `
-      <button onclick="handleNextStage()" class="btn btn-green w-full py-2 mb-2">
-        ➡️ Lanjut ke ${nextStage.label}
-      </button>
-    ` : `
-      <div class="text-sm text-gray-300 mb-2">
-        Semua stage pada area ini sudah selesai.
+    gs.feedback = `
+      <div class="text-yellow-400 font-bold text-xl mb-2">VICTORY! 🏆</div>
+      <div class="mb-1">+${expGain} XP</div>
+      <div class="mb-4 text-yellow-300 font-bold">
+        💎 Poin Battle: +${gs.battlePoints ?? 0}
       </div>
-    `}
 
-    <button onclick="handleBack()" class="btn btn-blue w-full py-2 mb-2">
-      ⬅️ Kembali ke Map
-    </button>
+      <div class="text-3xl animate-bounce mb-2">🎉</div>
 
-    <button onclick="handleRetry()" class="btn btn-gray w-full py-2">
-      🔁 Coba Lagi
-    </button>
-  `;
+      ${nextStage ? `
+        <button onclick="handleNextStage()" class="btn btn-green w-full py-2 mb-2">
+          ➡️ Lanjut ke ${nextStage.label}
+        </button>
+      ` : `
+        <div class="text-sm text-gray-300 mb-2">
+          Semua stage pada area ini sudah selesai.
+        </div>
+      `}
 
-  // Hapus musuh biar render ga error
+      <button onclick="handleBack()" class="btn btn-blue w-full py-2 mb-2">
+        ⬅️ Kembali ke Map
+      </button>
+
+      <button onclick="handleRetry()" class="btn btn-gray w-full py-2">
+        🔁 Coba Lagi
+      </button>
+    `;
+
   gs.enemy.hp = 0;
+
+  await window.saveProgress?.(gs, { silent: true });
+
   window.render();
 }

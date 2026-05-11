@@ -73,6 +73,10 @@ getStepsByScreen() {
         text: "Ini adalah kartu karaktermu. Di sini kamu bisa melihat nama, HP, level, dan EXP."
       },
       {
+        target: "#scoreSummary",
+        text: "Bagian ini menampilkan total poin dan best streak. Poin diperoleh dari jawaban benar, bonus kecepatan menjawab, dan streak jawaban benar berturut-turut."
+      },
+      {
         target: "#lifePointsCard",
         text: "Ini adalah LifePoints. Jika kamu kalah atau kabur dari battle, LifePoints akan berkurang. LifePoints akan pulih otomatis setiap 3 jam sampai maksimal 5."
       },
@@ -95,6 +99,10 @@ getStepsByScreen() {
       {
         target: "#achievementBtn",
         text: "Di sini kamu bisa melihat achievement atau pencapaian yang sudah berhasil diraih."
+      },
+      {
+        target: "#leaderboardBtn",
+        text: "Tombol ini digunakan untuk membuka leaderboard. Di sana kamu bisa melihat peringkat berdasarkan total poin siswa."
       },
       {
         target: "#settingBtn",
@@ -155,6 +163,34 @@ getStepsByScreen() {
       {
         target: "body",
         text: "Tutorial ini bisa dibuka kapan saja jika kamu lupa alur permainan atau ingin membaca penjelasan materi. 📘"
+      }
+    ];
+  }
+
+  // =========================
+  // LEADERBOARD SCREEN
+  // =========================
+  if (screen === "leaderboard") {
+    return [
+      {
+        target: ".glass-panel",
+        text: "Ini adalah halaman leaderboard. Di sini kamu bisa melihat peringkat siswa berdasarkan total poin."
+      },
+      {
+        target: ".space-y-3",
+        text: "Daftar ini menampilkan urutan pemain. Peringkat dihitung dari total poin, lalu stage selesai, level, dan best streak sebagai pembanding."
+      },
+      {
+        target: ".btn.btn-blue",
+        text: "Gunakan tombol Refresh untuk memuat ulang data leaderboard dari database."
+      },
+      {
+        target: ".btn.btn-gray",
+        text: "Gunakan tombol ini untuk kembali ke halaman Home."
+      },
+      {
+        target: "body",
+        text: "Semakin banyak poin yang kamu kumpulkan dari battle, semakin tinggi posisi kamu di leaderboard. 🏆"
       }
     ];
   }
@@ -249,6 +285,10 @@ getStepsByScreen() {
       {
         target: "#battleTopBar",
         text: "Bagian ini menampilkan nama musuh yang sedang kamu lawan. Tombol Kabur bisa dipakai untuk kembali ke map."
+      },
+      {
+        target: "#battleScoreBar",
+        text: "Bagian ini menampilkan total poin, poin yang diperoleh selama battle ini, dan streak jawaban benar. Semakin cepat dan konsisten menjawab benar, semakin besar poin yang diperoleh."
       },
       {
         target: "#battleArena",
@@ -412,9 +452,19 @@ getStepsByScreen() {
   // START GUIDE
   // =========================
   start(steps) {
-    this.steps = steps;
+    const safeSteps = Array.isArray(steps) && steps.length
+      ? steps
+      : [
+          {
+            target: "body",
+            text: "Belum ada panduan khusus untuk halaman ini."
+          }
+        ];
+
+    this.steps = safeSteps;
     this.index = 0;
     this.active = true;
+
     window.stopMapDrag?.();
 
     setTimeout(() => this.showStep(), 200);
