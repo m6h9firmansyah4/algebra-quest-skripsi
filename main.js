@@ -449,9 +449,20 @@ window.resetProgress = async function() {
         progress: gs.progress,
         settings: gs.settings,
         title: gs.title,
+
+        history: [],
+        lastPlayed: null,
+
         lastReset: serverTimestamp(),
         lastSaved: serverTimestamp()
       }, { merge: true });
+
+      try {
+          localStorage.removeItem("AQ_HISTORY");
+          localStorage.removeItem("AQ_LAST_PLAYED");
+        } catch (error) {
+          console.warn("Gagal menghapus backup history localStorage:", error);
+        }
 
       gs.feedback = "✅ Progress berhasil direset dan disimpan!";
     } catch (e) {

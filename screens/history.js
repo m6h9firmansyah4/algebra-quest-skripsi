@@ -36,11 +36,21 @@ window.renderHistoryScreen = function () {
 
   const theme = window.AQ_THEME || fallbackTheme;
 
+  let localHistory = [];
+
+  try {
+    localHistory = JSON.parse(localStorage.getItem("AQ_HISTORY") || "[]");
+  } catch (error) {
+    localHistory = [];
+  }
+
   const rawHistory = window.AQ_MODEL?.helpers?.getRecentHistory
     ? window.AQ_MODEL.helpers.getRecentHistory(gs)
     : gs.history || [];
 
-  const history = Array.isArray(rawHistory) ? rawHistory : [];
+  const history = Array.isArray(rawHistory) && rawHistory.length > 0
+    ? rawHistory
+    : localHistory.slice().reverse();
 
   const escapeHtml = window.AQ_MODEL?.helpers?.escapeHtml || function (value) {
     return String(value ?? "")

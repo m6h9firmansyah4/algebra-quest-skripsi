@@ -493,6 +493,14 @@ window.addGameHistory = function(entry = {}) {
     topic: historyEntry.topic
   };
 
+  // Backup lokal agar history tetap terlihat walaupun Firebase terlambat/gagal menyimpan.
+  try {
+    localStorage.setItem("AQ_HISTORY", JSON.stringify(gs.history));
+    localStorage.setItem("AQ_LAST_PLAYED", JSON.stringify(gs.lastPlayed));
+  } catch (error) {
+    console.warn("Gagal menyimpan history ke localStorage:", error);
+  }
+
   // Simpan diam-diam agar tidak mengganggu battle.
   if (window.saveProgress) {
     window.saveProgress(gs, { silent: true });

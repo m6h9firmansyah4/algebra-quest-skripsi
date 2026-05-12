@@ -53,5 +53,9 @@ export const gameState = {
   currentQuestion: null,
   userAnswer: '',
   feedback: '',
-  battleLog: []
+  battleLog: [],
+
+  // HISTORY SYSTEM
+  history: [],
+  lastPlayed: null
 };
