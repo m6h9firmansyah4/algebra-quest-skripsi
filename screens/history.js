@@ -598,6 +598,13 @@ window.renderHistoryScreen = function () {
           Catatan stage, soal, jawaban, dan hasil permainan siswa
         </p>
       </div>
+      <button 
+        onclick="goTo('home')" 
+        class="btn w-full mt-6"
+        style="${theme.buttonStyle("gray")}"
+      >
+        ⬅️ Kembali
+      </button>
 
       ${renderLatestBox(latest)}
 
@@ -631,14 +638,6 @@ window.renderHistoryScreen = function () {
             </div>
           `
       }
-
-      <button 
-        onclick="goTo('home')" 
-        class="btn w-full mt-6"
-        style="${theme.buttonStyle("gray")}"
-      >
-        ⬅️ Kembali
-      </button>
     </div>
   `;
 };
