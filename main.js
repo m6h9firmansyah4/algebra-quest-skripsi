@@ -281,6 +281,12 @@ function applyLoadedUserData(data, user) {
   window.gameState.progress = safeLoadProgress(data?.progress);
   window.gameState.settings = safeLoadSettings(data?.settings);
   window.gameState.title = data?.title || "Pemula";
+
+  window.gameState.history = Array.isArray(data?.history)
+    ? data.history
+    : [];
+
+  window.gameState.lastPlayed = data?.lastPlayed || null;
 }
 
 // ======================================================
@@ -375,6 +381,12 @@ window.saveProgress = async function(gs, options = {}) {
 
       title: gs.title || "Pemula",
 
+      history: Array.isArray(gs.history)
+        ? gs.history.slice(-100)
+        : [],
+
+      lastPlayed: gs.lastPlayed || null,
+
       lastSaved: serverTimestamp()
     };
 
@@ -418,13 +430,14 @@ window.resetProgress = async function() {
   gs.settings = { ...defaultSettings };
   gs.title = "Pemula";
 
-  gs.enemy = null;
-  gs.currentQuestion = null;
-  gs.userAnswer = "";
-  gs.feedback = "";
-  gs.battleLog = [];
-  gs.screen = "home";
-
+    gs.enemy = null;
+    gs.currentQuestion = null;
+    gs.userAnswer = "";
+    gs.feedback = "";
+    gs.battleLog = [];
+    gs.history = [];
+    gs.lastPlayed = null;
+    gs.screen = "home";
   if (auth.currentUser) {
     try {
       const userRef = doc(db, "users", auth.currentUser.uid);

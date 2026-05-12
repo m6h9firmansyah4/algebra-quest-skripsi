@@ -444,26 +444,58 @@ window.AQ_MODEL.helpers = {
    OPTIONAL: HISTORY WRITER
    Bisa dipanggil dari battle system setelah menang/kalah.
 =============================== */
-window.addGameHistory = function(entry) {
+window.addGameHistory = function(entry = {}) {
   if (!window.gameState) return;
 
-  if (!Array.isArray(window.gameState.history)) {
-    window.gameState.history = [];
+  const gs = window.gameState;
+
+  if (!Array.isArray(gs.history)) {
+    gs.history = [];
   }
 
-  window.gameState.history.push({
-    id: Date.now(),
+  const historyEntry = {
+    id: `${Date.now()}_${Math.floor(Math.random() * 100000)}`,
     time: new Date().toISOString(),
-    world: entry.world || window.gameState.selectedWorld || "unknown",
-    stage: entry.stage || "-",
-    result: entry.result || "Selesai",
-    points: entry.points || 0,
-    exp: entry.exp || 0,
-    note: entry.note || ""
-  });
 
+    // Lokasi soal
+    type: entry.type || "question",
+    world: entry.world || gs.selectedWorld || "unknown",
+    stage: entry.stage || gs.selectedStage || "-",
+    sourceStage: entry.sourceStage || entry.stage || gs.selectedStage || "-",
+    topic: entry.topic || "",
+    enemyName: entry.enemyName || gs.enemy?.name || "",
+
+    // Detail soal
+    questionText: entry.questionText || "",
+    options: Array.isArray(entry.options) ? entry.options : [],
+    userAnswer: entry.userAnswer ?? "",
+    correctAnswer: entry.correctAnswer ?? "",
+    isCorrect: entry.isCorrect === true,
+
+    // Hasil
+    result: entry.result || "Selesai",
+    points: Number(entry.points || 0),
+    exp: Number(entry.exp || 0),
+    note: entry.note || ""
+  };
+
+  gs.history.push(historyEntry);
+
+  // Batasi agar data Firebase tidak terlalu besar.
+  gs.history = gs.history.slice(-100);
+
+  // Data ringkas untuk menampilkan stage terakhir dimainkan.
+  gs.lastPlayed = {
+    time: historyEntry.time,
+    world: historyEntry.world,
+    stage: historyEntry.stage,
+    result: historyEntry.result,
+    topic: historyEntry.topic
+  };
+
+  // Simpan diam-diam agar tidak mengganggu battle.
   if (window.saveProgress) {
-    window.saveProgress(window.gameState);
+    window.saveProgress(gs, { silent: true });
   }
 };
 

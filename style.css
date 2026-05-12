@@ -1338,3 +1338,15 @@ body {
     max-width: 900px;
   }
 }
+
+.history-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.history-card summary {
+  list-style: none;
+}
+
+.history-card[open] {
+  border-color: rgba(96, 165, 250, 0.35);
+}

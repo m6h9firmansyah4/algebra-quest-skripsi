@@ -226,6 +226,8 @@ window.renderBattleScreen = function() {
 // ======================================================
 function adaptQuestion(q) {
   return {
+    id: q.id || "",
+    topic: q.topic || "",
     question: q.question,
     answer: q.correct,
     options: q.options || null,
@@ -235,6 +237,50 @@ function adaptQuestion(q) {
     // Untuk timer final stage / final boss
     sourceStage: q.sourceStage ?? q.timerStage ?? q.fromStage ?? q.stage ?? null
   };
+}
+
+function getDisplayedUserAnswer(gs) {
+  const q = gs.currentQuestion;
+
+  if (!q) return "";
+
+  if (q.options) {
+    const index = Number(gs.userAnswer);
+    return q.options[index] ?? "";
+  }
+
+  return gs.userAnswer ?? "";
+}
+
+function recordQuestionHistory(gs, result, isCorrect, extra = {}) {
+  if (!window.addGameHistory || !gs?.currentQuestion) return;
+
+  const q = gs.currentQuestion;
+
+  const userAnswer =
+    extra.userAnswer !== undefined
+      ? extra.userAnswer
+      : getDisplayedUserAnswer(gs);
+
+  window.addGameHistory({
+    type: "question",
+    world: gs.selectedWorld,
+    stage: gs.selectedStage,
+    sourceStage: q.sourceStage || gs.selectedStage,
+    topic: q.topic || "",
+    enemyName: gs.enemy?.name || "",
+
+    questionText: q.question || "",
+    options: q.options || [],
+    userAnswer,
+    correctAnswer: q.answer,
+
+    isCorrect,
+    result,
+    points: extra.points || 0,
+    exp: extra.exp || 0,
+    note: extra.note || ""
+  });
 }
 
 window.escapeBattle = function() {
@@ -256,6 +302,11 @@ window.escapeBattle = function() {
     gs.battleLog.push("🏳️ Kamu kabur dari battle. LifePoints berkurang 1.");
   }
 
+  recordQuestionHistory(gs, "Kabur", false, {
+    userAnswer: "Battle ditinggalkan",
+    note: "Siswa keluar dari battle sebelum menyelesaikan soal."
+  });
+
   gs.player.hp = gs.player.maxHp;
   gs.screen = "map";
 
@@ -269,8 +320,9 @@ window.escapeBattle = function() {
 // ======================================================
 
 function getTitleBonus(gs) {
-  const titleData = gs.achievements?.find(a => a.name === gs.title);
-  return titleData ? titleData.bonus : 0;
+  return window.AQ_MODEL?.helpers?.getTitleBonus
+    ? window.AQ_MODEL.helpers.getTitleBonus(gs)
+    : 0;
 }
 
 function estimatePlayerDamageForHits(gs, targetHits = 7) {
@@ -651,6 +703,11 @@ window.checkAnswer = function() {
 
     const point = awardCorrectAnswerPoints(gs);
 
+    recordQuestionHistory(gs, "Benar", true, {
+      points: point.total,
+      note: `Jawaban benar. Siswa memperoleh ${point.total} poin dari soal ini.`
+    });
+
     spawnDamage("circle", damage, "player");
 
     gs.battleLog.push(`⚔️ Benar! Musuh kena ${damage} DMG. 💎 +${point.total} poin.`);
@@ -681,6 +738,10 @@ window.checkAnswer = function() {
 
     registerWrongAnswer(gs);
     gs.streak = 0;
+
+    recordQuestionHistory(gs, "Salah", false, {
+      note: `Siswa menjawab ${getDisplayedUserAnswer(gs)}, sedangkan jawaban benar adalah ${gs.currentQuestion.answer}.`
+    });
 
     let damage = calculateEnemyDamage(gs);
     gs.player.hp = Math.max(0, gs.player.hp - damage);
@@ -718,10 +779,16 @@ window.handleTimeOut = function() {
   // Kalau feedback sedang muncul, jangan hitung timeout lagi
   if (gs.feedback) return;
 
-  registerWrongAnswer(gs);
-  gs.streak = 0;
+    registerWrongAnswer(gs);
+    gs.streak = 0;
 
-  let damage = calculateEnemyDamage(gs);
+    recordQuestionHistory(gs, "Waktu Habis", false, {
+      userAnswer: "Tidak menjawab",
+      note: `Waktu habis. Jawaban benar adalah ${gs.currentQuestion.answer}.`
+    });
+
+    let damage = calculateEnemyDamage(gs);
+
   gs.player.hp = Math.max(0, gs.player.hp - damage);
 
   spawnDamage("circle", damage, "enemy");
