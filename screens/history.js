@@ -642,3 +642,4 @@ window.renderHistoryScreen = function () {
     </div>
   `;
 };
+
