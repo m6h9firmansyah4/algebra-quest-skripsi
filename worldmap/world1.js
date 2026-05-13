@@ -837,7 +837,7 @@ function stage1w1() {
 // Fokus: menghitung hasil perkalian dua bilangan bulat.
 // ------------------------------------------------------------
 function stage2w1() {
-  const limit = 20;
+  const limit = 10;
 
   let a = randInt(-limit, limit);
   let b = randInt(-limit, limit);
@@ -861,8 +861,8 @@ function stage2w1() {
 // Fokus: membagi bilangan bulat dengan hasil yang tetap bulat.
 // ------------------------------------------------------------
 function stage3w1() {
-  const resultLimit = 15;
-  const divisorLimit = 10;
+  const resultLimit = 10;
+  const divisorLimit = 4;
 
   let result;
   do {
@@ -896,9 +896,9 @@ function stage3w1() {
 function stage4w1() {
   const ops = ["+", "-", "×", "÷"];
 
-  const numberLimit = 15;
-  const divisorLimit = 10;
-  const maxAnswerAbs = 500;
+  const numberLimit = 10;
+  const divisorLimit = 4;
+  const maxAnswerAbs = 100;
 
   for (let attempt = 0; attempt < 100; attempt++) {
     const totalOps = 2;
